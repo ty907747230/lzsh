@@ -1,0 +1,35 @@
+<template>
+	<div class="content">
+		<div  class="page">
+			<text @click="navback">页面</text>
+		</div>
+	</div>
+</template>
+ 
+<script>
+	export default {
+		methods:{
+			navback(){
+				uni.navigateBack({
+					delta:1
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.content {
+		 position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+	opacity: 0;
+	}
+	.page{
+		width: 750upx;
+		height: 200upx;
+		background-color: #0081FF;
+	}
+</style>

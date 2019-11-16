@@ -1,0 +1,116 @@
+<template>
+	<view class="container">
+		<view class="content">
+			<view class="content-div" v-if="typeimg=='empty'">
+				<image class="empty-img" src="/static/empty/empty.jpg" mode="widthFix"></image>
+				<text class="tips">空空如也</text>
+			</view>
+			
+			<view class="content-div" v-if="typeimg=='nodata'">
+				<image class="nodata-img" src="/static/empty/em.jpg" mode="widthFix"></image>
+				<text class="title">哎呀数据丢失啦</text>
+				<text class="tips">请检查你的手机是否已联网</text>
+
+				<view @click="loaddata" class="load-btn">重新加载</view>
+			</view>
+
+			<view class="content-div" v-if="typeimg=='nocollect'">
+				<image class="nocollect-img" src="/static/empty/nocollection-x.jpg" mode="widthFix"></image>
+				<text class="tips">连只苍蝇都没有...</text>
+			</view>
+
+			<view class="content-div" v-if="typeimg=='noorder'">
+				<image class="noorder-img" src="/static/empty/noorder-x.jpg" mode="widthFix"></image>
+				<text class="tips">还没有订单信息，去逛逛吧</text>
+			</view>
+
+			<view class="content-div" v-if="typeimg=='notpopular'">
+				<image class="notpopular-img" src="/static/empty/noorder-x.jpg" mode="widthFix"></image>
+				<text class="tips">该商品暂未加入推广，去搜索其他商品看看吧</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+
+		props: ['typeimg'],
+		methods: {
+			loaddata() {
+				this.$emit('loadDataAgain')
+			}
+		}
+	}
+</script>
+
+<style lang="scss">
+	.container {
+		background-color: #f7f7f7;
+	}
+
+	.content {
+		width: 750upx;
+		
+	}
+	.content-div {
+		margin-top: 280upx;
+		width: 750upx;
+		justify-content: center;
+		flex-direction: column;
+		align-items: center;
+		
+	}
+	.empty-img{
+		width: 380px;
+		height: 380px;
+		margin-bottom: 30upx;
+	}
+	.nodata-img {
+		width: 120px;
+		height: 120px;
+		margin-bottom: 30upx;
+	}
+		
+	.noorder-img {
+		width: 200upx;
+		height: 270upx;
+		margin-bottom: 30upx;
+	}
+		
+	.nocollect-img {
+		width: 200upx;
+		height: 250upx;
+		margin-bottom: 30upx;
+	}
+		
+	.notpopular-img {
+		width: 200upx;
+		height: 300upx;
+		margin-bottom: 30upx;
+	}
+		
+	.title {
+		color: #545454;
+		font-size: 34upx;
+		margin-bottom: 16upx;
+	}
+		
+	.tips {
+		font-size: 28upx;
+		color: #949494;
+		margin-bottom: 60upx;
+	}
+		
+	.load-btn {
+		height: 80upx;
+		width: 524upx;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background-color: #FB5F69;
+		color: #FFFFFF;
+		font-size: 30upx;
+		border-radius: 80upx;
+	}
+</style>

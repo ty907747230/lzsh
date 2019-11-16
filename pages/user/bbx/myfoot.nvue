@@ -1,0 +1,431 @@
+<template>
+	<div class="wrap">
+		<seize-seat typeimg='nocollect'  v-if="datalist.length==0"></seize-seat>
+		<list v-if="datalist.length!=0" class="tui-list" @loadmore="loaddata()"  loadmoreoffset="5" >
+			<!-- 刷新组件 -->
+			<refresh class="tui-refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="refreshing? 'show' : 'hide'">
+				<loading-indicator class="tui-loading"></loading-indicator>
+				<text class="refresh-text">{{refreshText}}</text>
+			</refresh>
+			<cell v-for="(item,index) in datalist" :key='index'>
+				<div class="shop-list" @click="navToDetail(item.type_one_id,item.item_id)">
+					<!-- 图片 -->
+					<div class="shop-pictrue">
+						<image class="big-pict" v-if="item.type_one_id==2" mode="widthFix" :src="item.pict_url"></image>
+						<image class="big-pict" v-if="item.type_one_id==3" mode="widthFix" :src="item.pict_url"></image>
+						<image v-if="item.type_one_id==0 ||item.type_one_id== 1" class="big-pict" mode="widthFix" :src="item.pict_url+'_310x310.jpg'"></image>
+					</div>
+					<!-- 右侧内容 -->
+					<div class="shop-content">
+						<!-- 标题 -->
+						<div class="shop-title">
+							<image v-if="item.type_one_id==0 ||item.type_one_id== 1" class="shop-icn" :src="item.user_type==0?'/static/index/icon_tb.png':'/static/index/icon_tm_s.png'" mode="aspectFit"></image>
+							<image v-if="item.type_one_id==2" class="shop-jd-icn" src="/static/index/jd-icon.png" mode="aspectFit"></image>
+							<image v-if="item.type_one_id==3" class="shop-jd-icn" src="/static/icons/pdd.jpg" mode="aspectFit"></image>
+							<text class="til"> {{item.title}}</text>
+						</div>
+				
+						<!-- 赚 -->
+						<div class="earn">
+							<text  class="primary">奖: {{tofix(item.tkfee3*userlevel.level_percent)}}</text>
+						</div>
+				
+						<!-- 价格 -->
+						<div class="shop-price">
+							<text class="ago-price">原价:￥{{item.cost_price}}</text>
+							<div class="quan">
+								<image src="/static/index/quanzi.png" mode="" class="quan-img">
+								</image>
+								<text class="quan-price"> ￥{{item.coupon}}</text>
+							</div>
+				
+						</div>
+				
+						<!-- 券 -->
+						<div class="progress-box">
+							<div class="box-left">
+								<text class="price-icon">￥</text>
+								<text class="now-price">{{item.quanhou_jiage}}</text>
+							</div>
+							<text class="sold-num">已售{{yishou(item.sales)}}件</text>
+						</div>
+					</div>
+				</div>
+			</cell>
+	
+			<!-- 加载组件 -->
+			<cell class="tui-loadmore">
+				<text class="loadmore-line" v-if="!loadingType"></text>
+				<text class="loadmore-text tui-gray">{{loadingType?'正在加载...':'没有更多了'}}</text>						
+			</cell>
+		</list>
+	</div>
+</template>
+
+<script>
+	import seizeSeat from '@/components/seize-seat.nvue'
+	export default {
+		data(){
+			return{
+				page:1,
+				per_page:10,
+				token:'',
+				datalist:[],
+				refreshText:'',
+				refreshing:'',
+				loadingType:true,
+				loadingText:'',
+				userlevel:{}
+			}
+		},
+		created() {
+			this.token=uni.getStorageSync('lzd-user').token;
+			this.userlevel=uni.getStorageSync('lzd-level');
+			this.loaddata();
+			uni.onNavigationBarButtonTap((e) => {
+			           this.deleteData()
+			        });
+		},
+		components:{
+			seizeSeat
+		},
+		methods:{
+			deleteData(){
+				if(!this.token){
+					uni.showToast({
+						title:"正在加载中，请稍后重试",
+					})
+				}
+				uni.request({
+					url:'http://39.100.111.131:8088/UserCenter/DelMyTracks',
+					method:'post',
+					data:{
+						token:this.token,
+					},
+					success:(res)=>{
+						console.log(res.data)
+						let {code,msg}=res.data;
+						if(code==2001||code==4048){
+							this.datalist=[];
+							uni.showToast({
+								title:msg,
+								icon:"none"
+							})
+							
+						}else{
+							uni.showToast({
+								title:msg,
+								icon:"none"
+							})
+						}
+					},
+					fail:()=>{
+						uni.showToast({
+							title:'荔枝开小差了，请联系客服',
+							icon:"none"
+						})
+						
+					}
+				})
+			},
+			navToDetail(type,id){
+				if(type==2){
+					uni.navigateTo({
+						url: `/pages/index/shopdetails-j?id=${id}`
+					});
+				}else if(type==3){
+					uni.navigateTo({
+						url: `/pages/index/shopdetails-p?id=${id}`
+					});
+				}else{
+					uni.navigateTo({
+						url: `/pages/index/shopdetails?id=${id}`
+					});
+				}
+			},
+			tofix(data){
+				return data.toFixed(2)
+			},
+			yishou(data) {
+				if(data>=10000){
+					return (data/10000).toFixed(1)+'万'
+				}
+				else{
+					return data
+				}
+			},
+			loaddata(source){
+				//如果是刷新则重置初始值
+				if (source == "refresh") {
+					this.loadingType = true;
+					this.loaded = false;
+					this.page = 1;
+				}
+				//检测没有数据
+				if (!this.loadingType) {
+					return;
+				}
+				uni.request({
+					url:'http://39.100.111.131:8088/UserCenter/MyTracks',
+					method:'POST',
+					data:{
+						token:this.token,
+						page:this.page,
+						per_page:this.per_page
+					},
+					success:(res)=>{
+						let{
+							code,
+							data,
+							msg
+						}=res.data;
+						console.log(res.data)
+						this.page++;
+						//结束下拉
+						if (source == "refresh") {
+							this.datalist = [];
+							this.refreshing = false;
+						}
+						if(code==2000){
+							let list=data.goods_info;
+							this.datalist=this.datalist.concat(list);
+							this.loadingType=list==this.per_page?true:false
+						}else{
+							this.loadingType=false
+							uni.showToast({
+								title:msg,
+								icon:'none'
+							})
+						}
+					},
+					fail:()=>{
+						this.refreshing = false;
+						uni.showToast({
+							title:'荔枝开小差了，请联系客服',
+							icon:'none'
+						})
+					}
+				})
+			},
+			//手指离开，下拉刷新触发修改状态
+			onrefresh(event) {		
+				this.refreshText = "正在刷新...";
+				this.refreshing = true;
+				this.loaddata("refresh");
+			},
+			//手指接触屏幕开始，下拉触发
+			onpullingdown(event) {
+				//如果为刷新中则不准再次触发刷新
+				if (this.refreshing) {
+					return;
+				}
+				if (Math.abs(event.pullingDistance) > Math.abs(event.viewHeight)) {
+					this.refreshText = "↑ 释放立即刷新";
+				} else {
+					this.refreshText = "↓ 下拉可以刷新";
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+	.wrap{
+		background-color: #F7F7F7;
+	}
+	
+	.shop-jd-icn{
+		width: 30upx;
+		height: 30upx;
+	}
+	.flicon{
+		font-family: flicon;
+		font-size: 28upx;
+	}
+	.tui-refresh {
+		width: 750px;
+		height: 80px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+	.refresh-text {
+		text-align: center;
+		font-size: 26px;
+		color: #999999;
+	}
+	.tui-loadmore {
+		height: 100px;
+		width: 750px;
+		flex-direction: column;
+		justify-content: center;
+		position: relative;
+		align-items: center;
+	}
+	
+	.loadmore-text {
+		font-size: 26px;
+		text-align: center;
+		color: #999999;
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+	
+	.loadmore-line {
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		border-bottom-color: #e5e5e5;
+		width: 320px;
+		position: absolute;
+		z-index: -1;
+	}
+
+	/* 商品列表 */
+	.shop-list {
+		width: 710upx;
+		margin: 0upx 20upx 20upx;
+		height: 260upx;
+		background-color: #fff;
+		border-radius: 10upx;
+		flex-direction: row;
+	}
+	
+	.shop-pictrue {
+		width: 260upx;
+		margin-right: 10upx;
+	}
+	
+	.big-pict {
+		width: 260upx;
+		height: 260upx;
+		border-radius: 10upx;
+		overflow: hidden;
+	}
+	
+	.shop-content {
+		padding: 10upx;
+		flex: 1;
+		position: relative;
+	}
+	
+	.shop-title {
+		flex-direction: row;
+	}
+	
+	.shop-icn {
+		margin-right: 10upx;
+		width: 50upx;
+		height: 30upx;
+	}
+	
+	.til {
+		flex: 1;
+		font-size: 24upx;
+		text-overflow: ellipsis;
+		lines: 1;
+	}
+	
+	.earn {
+		margin-top: 18upx;
+		flex-direction: row;
+	}
+	
+	.primary {
+		border-color: #ea3424;
+		border-style: solid;
+		border-width: 1upx;
+		font-size: 24upx;
+		color: #ea3424;
+		margin: 10upx 0;
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+		background-color: #fdf6f2;
+	}
+	
+	.middle {
+		background-color: #fcf0f0;
+		font-size: 24upx;
+		color: #ed7236;
+		margin: 10upx;
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+	}
+	
+	.shop-price {
+		align-items: flex-end;
+		flex-direction: row;
+		position: relative;
+		margin-top: 15upx;
+		justify-content: space-between;
+	}
+	
+	
+	
+	.now-price {
+		/* font-weight: bold; */
+		font-size: 50upx;
+		padding-right: 10upx;
+		color: #fb6b73;
+	}
+	
+	.ago-price {
+		text-decoration: line-through;
+		/* position: absolute;
+		left: 160upx; */
+		color: #969696;
+		font-size: 24upx;
+	}
+	
+	.progress-box {
+		margin-top: 15upx;
+		align-items: center;
+		position: relative;
+		color: #969696;
+		flex-direction: row;
+		justify-content: space-between;
+		margin-bottom: 10upx;
+	}
+	
+	.box-left {
+		flex-direction: row;
+		align-items: flex-end;
+	}
+	
+	.price-icon {
+		font-size: 30upx;
+		color: #fb6b73;
+		padding-bottom: 6upx;
+	}
+	
+	.quan {
+		flex-direction: row;
+		height: 31upx;
+		align-items: center;
+		font-size: 20upx;
+		border-style: solid;
+		border-color: #f51515;
+		border-width: 1upx;
+		position: relative;
+		margin-right: 40upx;
+	}
+	
+	.quan-img {
+		position: absolute;
+		left: -1upx;
+		width: 30upx;
+		height: 30upx;
+	}
+	
+	.quan-price {
+		font-size: 26upx;
+		margin-left: 20upx;
+		padding: 0 6upx;
+		color: #f51515;
+	}
+	
+	.sold-num {
+		color: #969696;
+		font-size: 24upx;
+		margin-right: 40upx;
+	}
+</style>

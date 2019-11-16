@@ -1,0 +1,103 @@
+<template>
+	<div class="warp">
+		<slider infinite='false' class="slider">
+			<image @click="launchAppIndex(index)" :src="img.src" class="frame" :key="index" v-for="(img,index) in imageList">
+			</image>
+		</slider>
+		<div class="skip" @click="launchApp"><text class="skip-wz">跳过</text></div>
+	</div>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				imageList: [{
+						src: '/static/guide/guide_1.9.png'
+					},
+					{
+						src: '/static/guide/guide_2.9.png'
+					},
+					{
+						src: '/static/guide/guide_3.9.png'
+					},
+					{
+						src: '/static/guide/guide_4.9.png'
+					}
+				]
+			}
+		},
+		
+		methods: {
+			launchAppIndex(index) {
+				if (this.imageList.length == index + 1) {
+					this.launchApp();
+				}
+			},
+			launchApp() {
+				// 直接到APP 且下次不再显示引导页
+				uni.setStorage({
+					key: 'lzd-flag',
+					data: true,
+					success() {
+						uni.switchTab({
+							url: '/pages/index/index'
+						});
+					}
+				});
+			}
+		}
+	}
+</script>
+
+<style>
+	.warp {
+		width: 750upx;
+		flex: 1;
+	}
+
+	.skip {
+		position: absolute;
+		z-index: 999;
+		right: 50rpx;
+		top: 80rpx;
+		background-color: #CCCCCC;
+		border-radius: 30upx;
+
+	}
+
+	.skip-wz {
+		padding: 10upx 20upx;
+		font-size: 30upx;
+		color: #FFFFFF;
+	}
+
+	.slider {
+		width: 750upx;
+		flex: 1;
+		position: relative;
+	}
+
+	.frame {
+		width: 750upx;
+		flex: 1;
+		flex-direction: column;
+	}
+
+	.image {
+		width: 750upx;
+		flex: 1;
+		background-color: #007AFF;
+	}
+
+	.indicator {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 100px;
+		background-color: rgba(0, 0, 0, 0);
+		item-color: #DDDDDD;
+		item-selected-color: rgb(0, 180, 255);
+	}
+</style>

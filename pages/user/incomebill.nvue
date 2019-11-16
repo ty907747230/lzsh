@@ -1,0 +1,644 @@
+<template>
+	<div class="content">
+		<!-- 标题栏 -->
+		<div class="page-header">
+			<!-- 状态栏占位 -->
+			<div :style="{ height: statusBarHeight }"></div>
+			<div class="page-header-wrapper">
+				<div class="page-header-left" @click="navback">
+					<text class="flicon xiaoxi">&#xe653;</text>
+				</div>
+				<div class="page-header-center">
+					<text class="page-header-title">收益结算明细</text>
+				</div>
+				<div class="page-header-right" @click="pickDate">
+					<text class="flicon rili">&#xe606;</text>
+				</div>
+			</div>
+		</div>
+
+		<!-- 顶部选项卡 -->
+		<tabs @change="changeTab" :index="tabIndex">
+			<tab-bar class="tui-white">
+				<div v-for="(tabBar,index) in tabBars" :key="index" class="tab-bar-item">
+					<text class="tab-bar-title" :class="[tabIndex==index ? 'tui-active' : '']">{{tabBar.desc}}</text>
+				</div>
+			</tab-bar>
+			<tab-content>
+				<list class="tui-list" @loadmore="loadMore(index1)" :ref="'tab'+index1" loadmoreoffset="5" v-for="(tab,index1) in tabBars"
+				 :key="index1">
+				 
+					<!-- 刷新组件 -->
+					<refresh class="tui-refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="tab.refreshing? 'show' : 'hide'">
+						<loading-indicator class="tui-loading"></loading-indicator>
+						<text :class="[iosRefresh?'ios-arrow':'']" v-if="isIos">{{arrow}}</text>
+						<text class="refresh-text">{{tab.refreshText}}</text>
+					</refresh>
+
+					<cell>
+						<div class="month-title">
+							<text class="month-title-w" v-if="currmonth==0">本月</text>
+							<text class="month-title-w" v-if="currmonth==1">上月</text>
+							<text class="month-title-w" v-if="currmonth==2">上上月</text>
+							<text class="month-title-w red">￥{{tab.all_income_money}}</text>
+						</div>
+					</cell>
+					<cell>
+						<seizeSeat typeimg='empty' v-if="tab.orderList.length==0"></seizeSeat>
+					</cell>
+					
+					<cell v-if="tab.orderList.length!=0" v-for="(item,index) in  tab.orderList" :key="index">
+						<div class="order-item">
+							<div class="order-item-left">
+								<image class="order-item-left-img" :src="'http:'+item.item_img+'_310x310.jpg'" mode="widthFix" v-if="item.type==0"></image>
+								<image class="order-item-left-img" :src="item.item_img" mode="widthFix" v-if="item.type!=0"></image>
+							</div>
+							<div class="order-item-right">
+								<text class="order-item-top-title order-title">{{item.message}}</text>
+								<text class="order-item-s">创建日 {{item.tb_paid_time}}</text>
+								<text class="order-item-s">结算日 {{item.earning_time}}</text>
+								<div class="order-item-bottom">
+									<text @click="copycode(item.trade_parent_id)" class="order-item-s">订单号 {{item.trade_parent_id}}</text>
+									<text class="order-item-s zigou order-item-type" v-if="item.bill_type==0">自购</text>
+									<text class="order-item-s zhiyao order-item-type" v-if="item.bill_type==1">直邀</text>
+									<text class="order-item-s jianyao order-item-type" v-if="item.bill_type==2">间邀</text>
+								</div>
+								<div class="order-item-info">
+									<text class="order-item-s jine">订单金额 ￥{{item.order_money}}</text>
+									<text class="order-item-s red">收益 + ￥{{item.money}}</text>
+									
+								</div>
+							</div>
+						</div>
+
+					</cell>
+
+					<!-- 加载组件 -->
+					<cell v-if="tab.orderList.length!=0" class="tui-loadmore">
+						<text class="loadmore-line" v-if="!tab.loadingType"></text>
+						<text class="loadmore-text tui-gray">{{tab.loadingText}}</text>
+					</cell>
+				</list>
+			</tab-content>
+		</tabs>
+	</div>
+</template>
+
+<script>
+	import seizeSeat from '@/components/seize-seat.nvue'
+	import tabContent from '@/components/tabNvue/tabContent.nvue'
+	import tabBar from '@/components/tabNvue/tabBar.nvue'
+	import tabs from '@/components/tabNvue/tabs.nvue'
+	const picker = weex.requireModule('picker')
+
+	export default {
+		components: {
+			tabContent,
+			tabBar,
+			tabs,
+			seizeSeat
+		},
+		data() {
+			return {
+				statusBarHeight: '0wx', //状态栏占位高度		
+				arrow: "",
+				iosRefresh: false,
+				refreshText: "下拉可以刷新",
+				tabIndex: 0, //当前的tab栏的索引
+				tabBars: [{
+						val: 0,
+						desc: "结算",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+						all_income_money: '' //当月所有收益
+					},
+					{
+						val: 1,
+						desc: "维权",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+						all_income_money: '' //当月所有收益
+					}
+				],
+				pageSize: 12,
+				currmonth: 0, //当前日期
+
+			}
+		},
+
+		//进入页面请求数据
+		created() {
+			//获取状态栏高度给顶部占位节点
+			uni.getSystemInfo({
+				success: res => {
+					this.statusBarHeight = res.statusBarHeight + 'wx';
+				}
+			})
+			this.loadData();
+		},
+		methods: {
+			copycode(code){
+				console.log(code)
+				uni.setClipboardData({
+					data:code,
+					success:()=>{
+						uni.showToast({
+							title:'复制订单号成功',
+							icon:'none'
+						})
+					},
+					fail:()=>{
+						uni.showToast({
+							title:'复制订单号失败',
+							icon:'none'
+						})
+					},
+					complete:()=>{
+						console.log(code)
+					}
+				})
+			},
+			pickDate() {
+				picker.pick({
+					items: ['本月', '上月', '上上月'],
+					index: this.currmonth,
+					title: '请选择你需要查询的月份',
+					titleColor: '#fff',
+					titleBackgroundColor: '#0eb3f0'
+				}, event => {
+					if (event.result === 'success') {
+						console.log(event.data)
+						if (event.data != this.currmonth) {
+							this.currmonth = event.data;
+							this.loadData('changemon')
+						}
+					}
+				})
+			},
+			navback() {
+				uni.navigateBack({
+					delta: 1
+				})
+			},
+
+			//加载数据
+			loadData(source) {
+				console.log(source)
+				//获取当前轮播图得索引
+				let index = this.tabIndex;
+				//获取当前轮播面板对象
+				let navItem = this.tabBars[index];
+				//如果上一次请求失败,请求数据加 1；
+				//如果是刷新则重置初始值
+				if (source == "changemon") {
+					navItem.loadingType = true;
+					navItem.loaded = false;
+					navItem.pageNo = 1;
+					navItem.orderList = []
+				}
+				//如果是刷新则重置初始值
+				if (source == "refresh") {
+					navItem.loadingType = true;
+					navItem.loaded = false;
+					navItem.pageNo = 1;
+				}
+				//检测没有数据
+				if (!navItem.loadingType) {
+					return;
+				}
+				//检测是否是第一次加载，防止重复加载数据
+				if (source == "tabChange" && navItem.loaded == true) {
+					return
+				}
+				let token = uni.getStorageSync('lzd-user').token;
+
+				uni.request({
+					url: 'http://39.100.111.131:8088/UserCenter/IncomesInfo',
+					data: {
+						token: token,
+						select_time: this.currmonth,
+						per_page: this.pageSize,
+						page: navItem.pageNo,
+						refund_tag: navItem.val
+					},
+					method: 'post',
+					success: res => {
+						console.log(res);
+						let {
+							code,
+							data
+						} = res.data;
+
+						//请求成功对应序号加一
+						navItem.pageNo++;
+						//结束下拉
+						if (source == "refresh") {
+							navItem.orderList = [];
+						}
+						//请求成功
+						if (code == 2000) {
+							navItem.all_income_money = data.all_income_money;
+							let shopList = data.out_money_notes;
+							// 添加新增数据		
+							navItem.orderList = navItem.orderList.concat(shopList);
+							//请求成功序号增加,并且修改对应得加载状态
+							navItem.loaded = true;
+
+							if (shopList.length != this.pageSize) {
+								//判断是否还有数据
+								navItem.loadingType = false;
+								//请求失败的情况下更改请求的次数
+								navItem.loadingText = '没有更多了';
+							} else {
+								navItem.loadingType = true;
+							}
+
+						} else {
+							navItem.loadingType = false;
+							//请求失败的情况下更改请求的次数
+							navItem.loadingText = '没有更多了';
+						}
+					},
+					fail: () => {
+
+						//请求失败的情况下更改请求的次数
+						navItem.loadingText = '没有更多了';
+					},
+					complete: () => {
+						navItem.refreshing = false;
+					}
+				})
+			},
+
+			//商品详情页面
+			navToDetail(id) {
+				uni.navigateTo({
+					url: "/pages/index/shopdetails-p?id=" + id
+				})
+			},
+
+			//上拉加载更多
+			loadMore(e) {
+				console.log("触发")
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabIndex];
+				if (!currentTab.loadingType) {
+					currentTab.loadingText = '没有更多了';
+					return
+				}
+				currentTab.loadingText = "正在加载...";
+				this.loadData();
+			},
+			async changeTab(e) {
+				this.tabIndex = e.index;
+				//如果是第一页的话就请求数据
+				if (this.tabBars[this.tabIndex].pageNo === 1) {
+					this.loadData();
+
+				}
+			},
+
+			//手指离开，下拉刷新触发修改状态
+			onrefresh(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabIndex];
+				this.iosRefresh = false;
+				currentTab.arrow = "↑";
+				currentTab.refreshText = "正在刷新...";
+				currentTab.refreshing = true;
+				this.loadData("refresh");
+
+			},
+
+			//手指接触屏幕开始，下拉触发
+			onpullingdown(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabIndex];
+
+				//如果为刷新中则不准再次触发刷新
+				if (currentTab.refreshing) {
+					return;
+				}
+				this.iosRefresh = this.isIos
+
+				if (Math.abs(event.pullingDistance) > Math.abs(event.viewHeight)) {
+					this.arrow = "↑";
+					currentTab.refreshText = "释放立即刷新";
+				} else {
+					this.arrow = "↓";
+					currentTab.refreshText = "下拉可以刷新";
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+	.flicon {
+		font-family: flicon;
+	}
+
+	.content {
+		background-color: #f7f7f7;
+	}
+
+	/* 顶部标题栏 */
+	.page-header {
+		background-color: #FFFFFF;
+	}
+
+	.page-header-wrapper {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		height: 100px;
+		padding: 0px 30px;
+	}
+
+	.page-header-left {
+		opacity: 0.9;
+	}
+
+	.page-header-title {
+		color: #545454;
+		font-size: 34upx;
+	}
+
+	.xiaoxi {
+		color: #545454;
+		font-size: 40upx;
+	}
+
+	.rili {
+		color: #0eb3f0;
+		font-size: 46upx;
+	}
+
+	.page-header-right {
+		width: 80px;
+		align-items: center;
+	}
+
+	.tui-white {
+		padding: 0 24upx;
+		background-color: #FFFFFF !important;
+		margin-bottom: 10upx;
+	}
+
+	.category-btn {
+		color: #F43F3B;
+	}
+
+	.tui-gray {
+		background-color: #fafafa;
+	}
+
+	.tui-slider-box {
+		width: 750upx;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.tui-slider {
+		width: 690upx;
+		height: 300upx;
+		border-radius: 12upx;
+		overflow: hidden;
+	}
+
+	.tui-img-radius {
+		border-radius: 12upx;
+	}
+
+	.tui-frame {
+		width: 690upx;
+		height: 300upx;
+		background-color: #fff;
+	}
+
+	.tui-slider-img {
+		width: 690upx;
+		height: 300upx;
+	}
+
+	.tui-indicator {
+		width: 690px;
+		height: 20px;
+		item-color: rgba(255, 255, 255, 0.4);
+		item-selected-color: #FFFFFF;
+		item-size: 14px;
+		position: absolute;
+		bottom: 24px;
+		left: 0;
+	}
+
+	.tui-loading {
+		margin-right: 15px;
+		height: 60px;
+		width: 60px;
+		color: #999999;
+	}
+
+	.tui-list {
+		/* padding: 20upx; */
+	}
+
+
+	.tab-bar-item {
+		height: 80px;
+		width: 350px;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-size: 30upx;
+		/* margin: 0 20upx; */
+	}
+
+	.category-btn {
+		height: 80px;
+		color: #f00;
+		font-size: 28upx;
+		width: 60upx;
+		flex-direction: row;
+		line-height: 80upx;
+		justify-content: center;
+	}
+
+	.tab-bar-title {
+		height: 80px;
+		line-height: 80px;
+		font-size: 32px;
+		color: #999;
+		font-weight: 400;
+	}
+
+	.tui-active {
+		color: #FF0000;
+		/* font-size: 36px; */
+		font-weight: bold;
+		border-bottom-width: 6px;
+		border-style: solid;
+		border-color: #FF0000;
+		/* 	width: 80px; */
+		text-align: center;
+	}
+
+	.tui-loadmore {
+		height: 100px;
+		width: 750px;
+		flex-direction: column;
+		justify-content: center;
+		position: relative;
+		align-items: center;
+	}
+
+	.loadmore-text {
+		font-size: 26px;
+		text-align: center;
+		color: #999999;
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+
+	.loadmore-line {
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		border-bottom-color: #e5e5e5;
+		width: 320px;
+		position: absolute;
+		z-index: -1;
+	}
+
+	.tui-refresh {
+		width: 750px;
+		height: 80px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.refresh-text {
+		text-align: center;
+		font-size: 26px;
+		color: #999999;
+	}
+
+	.ios-arrow {
+		color: #999999;
+		font-size: 42px;
+		font-weight: 300;
+		padding-right: 20px;
+		margin-left: -75px;
+	}
+
+	.month-title {
+		width: 750upx;
+		padding: 16upx 40upx;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.month-title-w {
+		font-size: 34upx;
+		font-weight: bold;
+	}
+
+	.red {
+		color: #FF0000;
+	}
+	
+	.jine{
+		color: #545454;
+	}
+
+	.order-item {
+		width: 710upx;
+		margin: 0 20upx;
+		background-color: #FFFFFF;
+		margin-bottom: 16upx;
+		border-radius: 16upx;
+		flex-direction: row;
+		height: 220upx;
+		justify-content: space-between;
+		
+	}
+
+	.order-item-left {
+		width: 220upx;
+	}
+
+	.order-item-left-img {
+		border-radius: 16upx;
+		width: 220upx;
+		height: 220upx;
+	}
+
+	.order-item-right {
+		flex: 1;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 10upx 20upx;
+	}
+
+	.order-item-top {
+		flex-direction: row;
+		justify-content: space-between;
+		margin-bottom: 10upx;
+	}
+
+	.order-item-top-title {
+		max-width: 400upx;
+		text-overflow: ellipsis;
+		lines: 1;
+		margin-bottom: 10upx;
+	}
+
+	.order-title {
+		font-size: 26upx;
+		color: #545454;
+	}
+
+	.order-item-bottom {
+		flex-direction: row;
+		/* justify-content: space-between; */
+	}
+
+	.order-item-info {
+		margin-top: 10upx;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.order-item-s {
+		color: #949494;
+		font-size: 22upx;
+	}
+	.order-item-type{
+		padding: 0 16upx;
+		border-radius: 30upx;
+		color: #FFFFFF;
+		margin-left: 20upx;
+	}
+	.zigou{
+		background-color: #FF4A2A;
+	}
+	.zhiyao{
+		background-color: #007AFF;
+	}
+	.jianyao{
+		background-color: #8DC63F;
+	}
+</style>

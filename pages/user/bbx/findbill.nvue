@@ -1,0 +1,512 @@
+<template>
+	<div class="content">
+		<!-- 顶部选项卡 -->
+		<tabs @change="changeTab" :index="tabIndex">
+			<tab-bar class="tui-white">
+				<div v-for="(tabBar,index) in tabBars" :key="index" class="tab-bar-item" :ref="tabBar.val+index">
+					<text class="tab-bar-title" :class="[tabIndex==index ? 'tui-active' : '']">{{tabBar.desc}}</text>
+				</div>
+			</tab-bar>
+			<tab-content>
+				<scroller class="scroller" v-for="(tab,index1) in tabBars" :key="index1">
+					<div class="slider-item">
+						<image class="dd-icon" src="/static/find-dd/find-icon.png" mode="widthFix"></image>
+						<div class="query_input">
+							<input v-if="tabIndex==0" v-model="trade_id_one" class="input" type="number" placeholder="请输入淘宝订单号" />
+							<input v-if="tabIndex==1" v-model="trade_id_two" class="input" type="number" placeholder="请输入淘宝订单号" />
+							<text @click="fingser()" class="find-btn">查询</text>
+						</div>
+						<div class="order-content" v-for="(items,indexs) in tab.orderList" :key="indexs">
+							<div class="order-content-left">
+								<image class="left-img" :src="'https:'+items.item_img" mode="aspectFill"></image>
+							</div>
+							<div class="order-content-right">
+								<text class="order-content-title">{{items.title}}</text>
+								<div class="order-content-content">
+									<div class="creat-data">
+										<text class="creat-data-w font-s">创建日</text>
+										<text class="font-s">{{items.tb_paid_time}}</text>
+									</div>
+									<div class="dingdan">
+										<text class="dingdan-id font-s">订单号 {{items.trade_parent_id}}</text>
+										<!-- <text  @click="copy_dd(items.trade_parent_id)" class="dingdan-c font-s">复制</text> -->
+									</div>
+									<div class="shouyi">
+										<div class="shouyi-left">
+											<text class="font-s">消费金额：</text>
+											<text class="sold-num"> ￥{{items.pay_price}}</text>
+										</div>
+										<text class="font-s" v-if="items.tk_status==3&tabIndex==0">已到账</text>
+										<text class="font-s" v-if="items.tk_status==12&tabIndex==0">已付款</text>
+										<text class="font-s" v-if="items.tk_status==13&tabIndex==0">已失效</text>
+										<text @click="fingdd(items.trade_parent_id,items.trade_id)" v-if="tabIndex==1" class="font-s  find-b">找回</text>
+										<!-- <text class="yugu">预估收益： ￥{{items.pub_share_pre_fee}}</text> -->
+									</div>
+								</div>
+							</div>
+						</div>
+						<div v-if="index1==1&&isshow_two" class="tips-tow">
+							<text class="tips-tow-top">功能说明：</text>
+							<text class="tips-tow-top">下单成功后，若订单不显示，可通过这里输入正确订单号找回。</text>
+							<div class="white-div"></div>
+							<text class="tips-tow-bottom">注意：</text>
+							<text class="tips-tow-bottom">1.订单有延迟，建议下单15分钟后在查询</text>
+							<text class="tips-tow-bottom">2.请确保要找回的订单是按照正常的操作下单</text>
+							<text class="tips-tow-bottom">3.超出7天的订单无法找回</text>
+							<text class="tips-tow-bottom">4.订单已存在，请到我的订单中查看</text>
+							<text class="tips-tow-bottom">5.该订单不存在或不属于您推广的订单</text>
+						</div>
+						<div class="tips-content" v-if="tabIndex==0&&isshow_one">
+							<text class="tips-content-title">如何获取订单编号</text>
+							<div class="num-paixu">
+								<div class="num-paixu-item">
+									<div class="num-h">
+										<text class="num-n">1</text>
+									</div>
+						
+									<text class="title_info">手机打开”淘宝APP“-我的淘宝查看我的订单</text>
+									<image class="tb_png" src="/static/find-dd/tb-bz.png" mode="widthFix"></image>
+								</div>
+								<div class="num-paixu-item">
+									<div class="num-h">
+										<text class="num-n">2</text>
+									</div>
+									<text class="title_info">复制订单编号</text>
+									<image class="tb_png" src="/static/find-dd/tb-bz-1.png" mode="widthFix"></image>
+								</div>
+							</div>
+						</div>
+						<div class="tips-content" v-if="tabIndex==1&&isshow_two">
+							<text class="tips-content-title">如何获取订单编号</text>
+							<div class="num-paixu">
+								<div class="num-paixu-item">
+									<div class="num-h">
+										<text class="num-n">1</text>
+									</div>
+						
+									<text class="title_info">手机打开”淘宝APP“-我的淘宝查看我的订单</text>
+									<image class="tb_png" src="/static/find-dd/tb-bz.png" mode="widthFix"></image>
+								</div>
+								<div class="num-paixu-item">
+									<div class="num-h">
+										<text class="num-n">2</text>
+									</div>
+									<text class="title_info">复制订单编号</text>
+									<image class="tb_png" src="/static/find-dd/tb-bz-1.png" mode="widthFix"></image>
+								</div>
+							</div>
+						</div>
+					</div>
+				</scroller>
+			</tab-content>
+		</tabs>
+	</div>
+</template>
+
+<script>
+	import tabContent from '@/components/tabNvue/tabContent.nvue'
+	import tabBar from '@/components/tabNvue/tabBar.nvue'
+	import tabs from '@/components/tabNvue/tabs.nvue'
+	import mediaList from '@/components/tabNvue/mediaList.nvue'
+
+	const dom = weex.requireModule('dom')
+
+	export default {
+		components: {
+			tabContent,
+			tabBar,
+			tabs,
+
+		},
+		data() {
+			return {
+				tabIndex: 0, //当前的tab栏的索引
+				trade_id_one: '',
+				trade_id_two: '',
+				isshow_one:true,
+				isshow_two:true,
+				token:'',
+				tabBars: [{
+						val: 0,
+						desc: "订单查询",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 0,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					},
+					{
+						val: 1,
+						desc: "订单找回",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 0,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					}
+				],
+			}
+		},
+
+		//进入页面请求数据
+		created() {
+			this.userlevel = uni.getStorageSync("lzd-level")
+		},
+
+		methods: {
+			fingser() {
+				console.log(this.tabIndex);
+				this.token = uni.getStorageSync('lzd-user').token;
+				var navItem = this.tabBars[this.tabIndex];
+				if(this.tabIndex==1){
+					uni.request({
+						url: `http://39.100.111.131:8088/UserCenter/FindNoMasterOrder?token=${this.token}&trade_parent_id=${this.trade_id_two}`,
+						success: (res) => {
+							let {
+								code,
+								data,
+								msg
+							} = res.data;
+							console.log(res);
+							if (code == 2000) {
+								navItem.orderList = data.order_list;
+								this.isshow_two=false;
+								
+							} else if (code == 2001) {
+								this.isshow_two=true;
+								uni.showToast({
+									icon: 'none',
+									title: msg
+								})
+							}
+						},
+						fail: () => {
+							console.log("荔枝开小差了")
+						}
+					})
+				}
+				else{
+					uni.request({
+						url: `http://39.100.111.131:8088/UserCenter/SelectByTradeParentId?token=${this.token}&trade_parent_id=${this.trade_id_one}`,
+						success: (res) => {
+							let {
+								code,
+								data,
+								msg
+							} = res.data;
+							console.log(res);
+							if (code == 2000) {
+								navItem.orderList = data.order_data;
+								this.isshow_one=false
+								
+							} else if (code == 2001) {
+								this.isshow_one=true
+								uni.showToast({
+									icon: 'none',
+									title: msg
+								})
+							}
+						},
+						fail: () => {
+							console.log("荔枝开小差了")
+						}
+					})
+				}
+				
+			},
+			fingdd(p_id,s_id) {
+				uni.request({
+					url:`http://39.100.111.131:8088/UserCenter/OrderRetrieval?token=${this.token}&trade_parent_id=${p_id}&trade_id=${s_id}`,
+					success:(res)=>{
+						let {
+							code,
+							data,
+							msg
+						} = res.data;
+						if(code==2000){
+							this.tabBars[1].orderList=[]
+						}
+						uni.showToast({
+							icon: 'none',
+							title: msg
+						})
+					},
+					fail: () => {
+						console.log("荔枝开小差了")
+					}
+				})
+			},
+			async changeTab(e) {
+				this.tabIndex = e.index;
+			},
+		}
+	}
+</script>
+
+<style>
+	.flicon {
+		font-family: flicon;
+		font-size: 36upx;
+		color: #e74b45;
+	}
+
+	.slider-item {
+		width: 750upx;
+		padding: 0 50upx 30upx;
+
+	}
+
+	.dd-icon {
+		width: 332upx;
+		height: 234upx;
+		margin: 40upx 160upx;
+	}
+
+	/* 好券 */
+	.flicon {
+		font-family: flicon;
+		font-size: 36upx;
+		color: #e74b45;
+	}
+
+	.content {
+		background-color: #f8f8f8;
+
+	}
+
+	.tui-white {
+
+		background-color: #FFFFFF !important;
+		margin-bottom: 4upx;
+	}
+
+	.tui-list {
+		/* padding: 20upx; */
+	}
+
+	.tab-bar-item {
+		height: 80px;
+		width: 350px;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-size: 30upx;
+		/* margin: 0 20upx; */
+	}
+
+	.tab-bar-title {
+		height: 80px;
+		line-height: 80px;
+		font-size: 32px;
+		color: #999;
+		font-weight: 400;
+	}
+
+	.tui-active {
+		color: #FF0000;
+		font-weight: bold;
+		border-bottom-width: 6px;
+		border-style: solid;
+		border-color: #FF0000;
+		/* text-align: center; */
+	}
+
+	.query_input {
+		width: 600upx;
+		flex-direction: row;
+		height: 80px;
+		align-items: center;
+		margin: 0 24upx;
+		margin-bottom: 40upx;
+	}
+
+	.input {
+		width: 480px;
+		height: 80px;
+		border-width: 1px;
+		border-style: solid;
+		border-color: #FE2D64;
+		border-right-width: 0;
+		padding-left: 20px;
+		font-size: 28px;
+
+		border-top-left-radius: 80upx;
+		border-bottom-left-radius: 80upx;
+		placeholder-color: #ccc;
+
+	}
+
+	.find-btn {
+		font-size: 28upx;
+		border-width: 1px;
+		border-style: solid;
+		border-color: #FE2D64;
+		border-left-width: 0;
+		flex-direction: row;
+		color: #FFFFFF;
+		width: 120upx;
+		height: 80upx;
+		text-align: center;
+		line-height: 80upx;
+		background-color: #FE2D64;
+		border-top-right-radius: 80upx;
+		border-bottom-right-radius: 80upx;
+	}
+
+	.tips-content {
+		width: 650upx;
+	}
+
+	.tips-content-title {
+		color: #747474;
+		font-size: 32upx;
+	}
+
+	.num-paixu {
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.num-paixu-item {
+		width: 290upx;
+	}
+
+	.num-h {
+		flex-direction: row;
+		margin: 20upx 0;
+	}
+
+	.num-n {
+		font-size: 24upx;
+		color: #FE2D64;
+		border-width: 1px;
+		border-style: solid;
+		border-color: #FE2D64;
+		padding: 6upx 14upx;
+		border-radius: 34upx;
+	}
+
+	.title_info {
+		height: 80upx;
+		font-size: 28upx;
+		color: #747474;
+	}
+
+	.tips-tow {
+		margin: 16upx 0;
+	}
+
+	.white-div {
+		height: 16upx;
+	}
+
+	.tips-tow-top {
+		color: #949494;
+		font-size: 28upx;
+		margin-bottom: 14upx;
+	}
+
+	.tips-tow-bottom {
+		color: #949494;
+		font-size: 28upx;
+		padding-bottom: 14upx;
+	}
+
+	.tb_png {
+		width: 290upx;
+		height: 370upx;
+	}
+
+	.order-content-left {
+		width: 200upx;
+		margin-right: 16upx;
+	}
+
+	.left-img {
+		border-radius: 16upx;
+		width: 200upx;
+		height: 200upx;
+		overflow: hidden;
+	}
+
+	.order-content {
+		width: 650upx;
+		background-color: #FFFFFF;
+		height: 200upx;
+		margin-bottom: 20upx;
+		border-radius: 16upx;
+		flex-direction: row;
+	}
+
+	.order-content-title {
+		font-size: 26upx;
+		lines: 1;
+		text-overflow: ellipsis;
+	}
+
+	.order-content-right {
+		height: 200upx;
+		padding: 24upx 14upx 14upx;
+		flex: 1;
+		color: #545454;	
+	}
+
+	.order-content-content {
+		margin-top: 16upx;
+		color: #949494;
+	}
+
+	.creat-data {
+		margin-bottom: 6upx;
+		flex-direction: row;
+		font-size: 26upx;
+	}
+	.creat-data-w {
+		margin-right: 10upx;
+		margin-bottom: 10upx;
+	}
+	.dingdan{
+		flex-direction: row;
+		justify-content: space-between;
+	}
+	.dingdan-id {
+		margin-right: 16upx;
+		font-size: 24upx;
+	}
+
+	.shouyi {
+		color: #545454;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 10upx;
+		
+	}
+	.shouyi-left{
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.font-s{
+		font-size: 22upx;
+	}
+	.sold-num{
+		color: #FE2D64;
+		
+	}
+	.find-b {
+		color: #949494;
+		font-size: 22upx;
+		padding: 6upx 16upx;
+		border-radius: 30upx;
+		border-color: #CCCCCC;
+		border-style: solid;
+		border-width: 1upx;
+	}
+</style>

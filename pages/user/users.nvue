@@ -1,0 +1,520 @@
+<template>
+	<div class="center">
+		<div class="logo" :hover-class="!login ? 'logo-hover' : ''">
+			<div class="head-left">
+				<div class="head-img">
+					<text class="flicon touxiang">&#xe66a;</text>
+				</div>
+				<text v-if="true" @click="goLogin" class="uer-name">点击登录</text>
+				<div class="head-content" v-if="false">
+					<div class="head-mingzi">
+						<text class="head-wenzi">昵称: </text>
+						<text class="flicon huiyuan">&#xe61f;超级会员</text>
+					</div>
+					<div class="code">
+						<text class="head-wenzi">邀请码: </text>
+						<text class="copy">复制</text>
+					</div>
+				</div>
+			</div>
+			<div class="head-btn">
+				<text class="flicon shezhi" @click="navtoSet">&#xe613;</text>
+			</div>
+		</div>
+		<!-- 内容 -->
+		<div class="section">
+			<scroller class="scroller">
+				<refresh class="refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="refreshing ? 'show' : 'hide'">
+					<loading-indicator class="indicator"></loading-indicator>
+					<text class="indicator-text">{{refreshText}} </text>
+
+				</refresh>
+				<!-- 余额 -->
+				<div class=" block balance">
+					<text class="balance-left">余额 0元</text>
+					<text class="balance-right">提现</text>
+				</div>
+
+				<!-- 收益 -->
+				<div class="profitList block">
+					<div class="profit-item" v-for="(item,index) in profitList" :key="index">
+						<div class="profit-price">
+							<text class="num">{{item.num}}</text>
+						</div>
+						<text class="wenzi">{{item.val}}</text>
+					</div>
+				</div>
+
+				<!-- 会员详情 -->
+				<div class="member">
+					<div class="member-title">
+						<text class="flicon title">&#xe612;</text>
+						<text class="wenzi">会员详情</text>
+					</div>
+					<div class="member-content">
+						<div class="menber-item" v-for="(item,index) in memberList" :key="index">
+							<text class="flicon icon" :class="[item.red]">{{item.icon}}</text>
+							<text class="desc">{{item.val}}</text>
+						</div>
+					</div>
+				</div>
+
+				<!-- 我的工具 -->
+				<div class="tool">
+					<div class="tool-title member-title">
+						<text class="flicon title">&#xe619;</text>
+						<text class="wenzi">我的工具</text>
+					</div>
+					<div class="tool-content">
+						<div class="menber-item" v-for="(item,index) in toolList" :key="index">
+							<text class="flicon icon">{{item.icon}}</text>
+							<text class="desc">{{item.val}}</text>
+
+						</div>
+					</div>
+				</div>
+			</scroller>
+		</div>
+
+	</div>
+
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				token: uni.getStorageSync('lzd-user') || uni.getStorageSync('lzd-wxInfo') || "",
+				refreshText: "下拉刷新 ↓",
+				refreshing: false,
+				logining: false, //是否正在跳转登录
+				login: false,
+				avatarUrl: "../../static/uni-center/logo.png",
+				uerInfo: {},
+				profitList: [{
+						val: "今日收益",
+						num: (this.gain_money && this.gain_money.gain_today) || 0
+					},
+					{
+						val: "昨日预估",
+						num: (this.gain_money && this.gain_money.gain_yesterday) || 0
+					},
+					{
+						val: "本月预估",
+						num: (this.gain_money && this.gain_money.gain_this_month) || 0
+					},
+					{
+						val: "上月结算",
+						num: (this.gain_money && this.gain_money.gain_last_month) || 0
+					},
+				],
+				red: "red",
+				memberList: [{
+						val: "我的订单",
+						icon: "\ue683",
+						red: "red"
+					},
+					{
+						val: "团队订单",
+						icon: "\ue611",
+						red: "blue"
+					},
+					{
+						val: "我的团队",
+						icon: "\ue647",
+						red: "redT"
+					},
+					{
+						val: "收益报表",
+						icon: "\ue60c",
+						red: "orange"
+					},
+
+				],
+				toolList: [{
+						val: "新手教程",
+						icon: "\ue617",
+					},
+					{
+						val: "分享推广",
+						icon: "\ue61d"
+					},
+					{
+						val: "我的收藏",
+						icon: "\ue616"
+					},
+					{
+						val: "常见问题",
+						icon: "\ue6ae"
+					},
+					{
+						val: "在线客服",
+						icon: "\ue6ab"
+					},
+					{
+						val: "关于我们",
+						icon: "\ue63e"
+					},
+
+				]
+			}
+		},
+		beforeCreate() {
+			const domModule = weex.requireModule('dom')
+			domModule.addRule('fontFace', {
+				'fontFamily': "flicon",
+				'src': "url('https://at.alicdn.com/t/font_1251546_3ouanhqq225.ttf')",
+			});
+		},
+		
+		mounted() {
+			console.log(uni.getStorageSync('lzd-wxInfo'))
+		},
+		activated() {
+			console.log("再次进入");
+		},
+		
+		methods: {
+			//刷新事件
+			onrefresh(event) {
+				this.refreshText = "正在刷新..."
+				this.refreshing = true
+				setTimeout(() => {
+					this.refreshing = false
+				}, 2000)
+			},
+			//下拉事件
+			onpullingdown(event) {
+				if (event.pullingDistance > 250) {
+					this.refreshText = "释放刷新 ↑"
+				} else {
+					this.refreshText = "下拉刷新 ↓"
+				}
+			},
+			//跳转设置页
+			navtoSet() {
+				uni.navigateTo({
+					url: '/pages/user/set',
+				});
+			},
+			//跳转登录
+			goLogin() {
+				if (this.logining) {
+					return
+				}
+				//加入点击登录防抖
+				this.logining = true
+				var _that = this
+				uni.navigateTo({
+					url: '/pages/user/login',
+					success: res => {
+						var id = setTimeout(function() {
+							_that.logining = false;
+							//清除定时器
+							if (id) {
+								clearTimeout(id);
+							}
+						}, 1000);
+					},
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.flicon {
+		font-family: flicon;
+		font-size: 40upx;
+	}
+
+	.center {
+		flex-direction: column;
+	}
+
+	.logo {
+		width: 750upx;
+		height: 240upx;
+		padding: 60upx 20upx 0;
+		background-color: #ff4a2a;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		background-image: linear-gradient(to bottom, #ff2a1f, #ff7237);
+		opacity: 0.8;
+	}
+
+	.head-left {
+		width: 400upx;
+		height: 240upx;
+		align-items: center;
+		flex-direction: row;
+	}
+
+	.head-content {
+		justify-content: center;
+		flex-direction: column;
+	}
+
+	.head-mingzi {
+		flex-direction: row;
+	}
+
+	.huiyuan {
+		font-size: 24upx;
+		color: #deae82;
+		background-color: #434343;
+		padding: 2upx 10upx;
+		border-radius: 18upx;
+	}
+
+	.head-wenzi {
+		color: #FFFFFF;
+		font-size: 30upx;
+		margin-right: 20upx;
+	}
+
+	.code {
+		margin-top: 16upx;
+		flex-direction: row;
+
+	}
+
+	.copy {
+		padding: 4upx 10upx;
+		color: #434343;
+		font-size: 22upx;
+		background-color: #deae82;
+		border-radius: 20upx;
+	}
+
+	.shezhi {
+		font-size: 60upx;
+		color: #FFFFFF;
+	}
+
+	.head-img {
+		width: 100upx;
+		height: 100upx;
+		border-radius: 100upx;
+		background-color: #8a8a8a;
+		color: #dd5353;
+		justify-content: center;
+		align-items: center;
+		line-height: 100upx;
+		margin-right: 20upx;
+	}
+
+	.touxiang {
+		font-size: 70upx;
+		font-weight: bold;
+	}
+
+	.logo-wai {
+		margin-top: 40upx;
+		width: 240upx;
+		height: 240upx;
+		border-radius: 240upx;
+		border-width: 4upx;
+		border-color: #ffa895;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.logo-title {
+		font-size: 24upx;
+		width: 180upx;
+		height: 180upx;
+		border-width: 10upx;
+		border-color: #ffa895;
+		border-radius: 180upx;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.uer-name {
+		padding: 20upx;
+		height: 100upx;
+		line-height: 60upx;
+		font-size: 38upx;
+		color: #FFFFFF;
+	}
+
+	.go-login {
+		font-size: 38upx;
+		color: #FFFFFF;
+	}
+
+	.navigat-arrow {
+		font-size: 38upx;
+		color: #FFFFFF;
+	}
+
+	.login-title {
+		height: 150upx;
+		justify-content: center;
+		flex-direction: column;
+		margin-left: 20upx;
+	}
+
+	/* 内容 */
+	.section {
+		padding: 20upx;
+		background-color: #F8F8F8;
+	}
+
+	/* 余额 */
+	.block {
+		padding: 10upx 5upx;
+		border-radius: 16upx;
+		background-color: #FFFFFF;
+		flex-direction: row;
+		width: 710upx;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20upx;
+	}
+
+	.balance {
+		padding: 10upx 20upx;
+		height: 100upx;
+	}
+
+	.profitList {
+		height: 160upx;
+	}
+
+	.balance-left {
+		font-size: 30px;
+	}
+
+	.balance-right {
+		font-size: 30px;
+	}
+
+	/* 收益 */
+	.profit-item {
+		width: 175upx;
+		height: 160upx;
+		align-items: center;
+		justify-content: center;
+		padding: 0 4px;
+	}
+
+	.profit-price {
+		flex-direction: row;
+		justify-content: flex-start;
+		font-size: 30upx;
+		padding-bottom: 20upx;
+	}
+
+	.iconq {
+		background-color: #007AFF;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+
+	.num {
+		font-size: 50upx;
+	}
+
+	.wenzi {
+		font-size: 30upx;
+	}
+
+	/* 会员详情 */
+	.member {
+		padding: 20upx;
+		height: 220upx;
+		width: 710;
+		background-color: #FFFFFF;
+		margin-bottom: 20upx;
+	}
+
+	.member-title {
+		flex-direction: row;
+		width: 710upx;
+		height: 60upx;
+		align-items: center;
+	}
+
+	.title {
+		padding-right: 10upx;
+	}
+
+	.member-content {
+		height: 120upx;
+		flex-direction: row;
+	}
+
+	.menber-item {
+		height: 120upx;
+		width: 175upx;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.icon {
+		margin-bottom: 20upx;
+		font-size: 50upx;
+	}
+
+	/* 我的工具 */
+	.tool {
+		padding: 20upx;
+		height: 340upx;
+		width: 710;
+		background-color: #FFFFFF;
+	}
+
+	.tool-content {
+		width: 710upx;
+		height: 2600upx;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+	}
+
+	/* 颜色区域 */
+	.red {
+		color: #f56657;
+	}
+
+	.blue {
+		color: #33abbb;
+	}
+
+	.redT {
+		color: #f56657;
+	}
+
+	.orange {
+		color: #faa343;
+	}
+
+	.desc {
+		font-size: 26upx;
+	}
+
+	/* 刷新区域 */
+	.refresh {
+		align-items: center;
+		flex-direction: row;
+		justify-content: center;
+		margin-bottom: 10px;
+	}
+
+
+	.indicator-text {
+		color: #949494;
+		font-size: 38px;
+		text-align: center;
+	}
+
+	.indicator {
+		height: 80px;
+		width: 80px;
+		color: #70ba30;
+		margin-right: 20px;
+	}
+</style>

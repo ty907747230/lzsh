@@ -1,0 +1,775 @@
+<template>
+	<div class="content">
+		<!-- 状态栏占位 -->
+		<!-- <div :style="{ height: statusBarHeight }"></div> -->
+		<!-- 头部 -->
+		<div class="content-head">
+			<image class="content-head-img" src="/static/kq/kq_t.jpg" mode="widthFix"></image> 
+		</div> 
+		<!-- uni 官方顶部选项卡组件 -->
+		<uni-tab-bar :drag="true" :tab-bars="tabBars" :tab-index="tabCurrentIndex" @tabChange="tabChange"></uni-tab-bar>
+
+		<!-- slider就是uni swiper -->
+		<slider class="slider" :index="tabCurrentIndex" :infinite="false" @change="tabChange">
+
+			<list class="tui-list" @loadmore="loadMore(index1)" :ref="'tab'+index1" loadmoreoffset="5" v-for="(tab,index1) in tabBars"
+			 :key="index1">
+
+				<!-- 刷新组件 -->
+				<refresh class="tui-refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="tab.refreshing? 'show' : 'hide'">
+					<loading-indicator class="tui-loading"></loading-indicator>
+					<text :class="[iosRefresh?'ios-arrow':'']" v-if="isIos">{{arrow}}</text>
+					<text class="refresh-text">{{tab.refreshText}}</text>
+				</refresh>
+				<!-- <cell>
+					<image src="/static/kq/kq_b.jpg" resize="stretch"></image>
+				</cell> -->
+				<cell v-for="(item,index) in  tab.orderList" :key="index">
+					<!-- 商品列表组件-->
+					<!-- 商品列表 -->
+					<div class="shop-list" @click="navToDetail(item.itemid)">
+						<!-- 图片 -->
+						<div class="shop-pictrue">
+							<image class="big-pict" mode="aspectFill" :src="item.itempic+'_310x310.jpg'"></image>
+						</div>
+						<!-- 右侧内容 -->
+						<div class="shop-content">
+							<!-- 标题 -->
+							<div class="shop-title">
+								<image  class="shop-icn" :src="item.user_type==0?'/static/index/icon_tb.png':'/static/index/icon_tm_s.png'"
+								 mode="aspectFit"></image>
+								<text class="til">{{item.itemshorttitle}}</text>
+							</div>
+							<!-- 描述 -->
+							<div>
+								<text class="shop-desc"># {{item.short_itemdesc}}</text>
+							</div>
+							<!-- 已抢 -->
+							<view class="sold-content">
+								<image class="hot-img" src="/static/kq/hot.png" mode="widthFix"></image>
+								<view class="sold-content-w">
+									<text class="sold-num">已抢</text>
+									<text class="sold-num-hot">{{item.itemsale}}</text>
+									<text class="sold-num">件</text>
+								</view>
+								
+							</view>
+							<!-- 赚 -->
+							<!-- <div class="earn">
+								
+							</div> -->
+							<!-- 券 -->
+							<!-- <div class="progress-box">
+								<text class="ago-price">原价:￥{{item.itemprice}}</text>	 
+							</div> -->
+							<!-- 价格 -->
+							<div class="shop-price">
+								<div class="box-left">
+									<text class="price-icon">券后￥</text>
+									<text class="now-price">{{item.itemendprice}}</text>
+								</div>
+								<div class="quan">
+									<image src="/static/index/quanzi.png" class="quan-img">
+									</image>
+									<text class="quan-price"> ￥{{item.couponmoney}}</text>
+								</div>
+								<!-- <text class="primary">当前奖: {{(item.tkmoney*0.5).toFixed(2)}}</text>			 -->					
+							</div>	
+						</div>
+					</div>
+				</cell>
+
+				<!-- 加载组件 -->
+				<cell class="tui-loadmore">
+					<text class="loadmore-line" v-if="!tab.loadingType"></text>
+					<text class="loadmore-text tui-gray">{{tab.loadingText}}</text>
+				</cell>
+
+			</list>
+		</slider>
+
+	</div>
+</template>
+
+<script>
+	import uniTabBar from '@/components/tab-nvue/tabbar-1.nvue'
+	const dom = weex.requireModule('dom')
+
+
+	export default {
+		components: {
+			uniTabBar
+		},
+		data() {
+			return {
+				currentTime: "",
+				statusBarHeight: '0wx', //状态栏占位高度
+				// 功能栏
+				arrow: "",
+				iosRefresh: false,
+				refreshing: false, //刷新状态
+				refreshText: "下拉可以刷新",
+				tabCurrentIndex: 0, //当前的tab栏的索引
+				tabBars: [{
+						id: "00:00",
+						desc: "昨日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 1,
+					},
+					{
+						id: "10:00",
+						desc: "昨日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 2,
+					},
+					{
+						id: "12:00",
+						desc: "昨日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 3,
+					},
+					{
+						id: "15:00",
+						desc: "昨日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 4,
+					},
+					{
+						id: "20:00",
+						desc: "昨日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 5,
+					},
+					{
+						id: "00:00",
+						desc: "即将开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 6,
+					}, {
+						id: "10:00",
+						desc: "即将开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 7,
+					}, {
+						id: "12:00",
+						desc: "即将开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 8,
+					}, {
+						id: "15:00",
+						desc: "即将开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 9,
+					}, {
+						id: "20:00",
+						desc: "即将开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 10,
+					}, {
+						id: "00:00",
+						desc: "明日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 11,
+					}, {
+						id: "10:00",
+						desc: "明日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 12,
+					}, {
+						id: "12:00",
+						desc: "明日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 13,
+					}, {
+						id: "15:00",
+						desc: "明日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 14,
+					}, {
+						id: "20:00",
+						desc: "明日开抢",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 15,
+					}
+				],
+				
+			}
+		},
+
+		//进入页面请求数据
+		created() {
+			//获取状态栏高度给顶部占位节点
+			// uni.getSystemInfo({
+			// 	success: res => {
+			// 		this.statusBarHeight = res.statusBarHeight + 'wx';
+			// 	}
+			// })
+			var _that = this;
+			_that.currentTime = (new Date()).getHours();
+			_that.getCurrentTime(_that.currentTime)
+			var pages = getCurrentPages();
+			var page = pages[pages.length - 1];
+			var currentWebview = page.$getAppWebview();
+			console.log(this.tabCurrentIndex)
+			currentWebview.addEventListener('show', function(e) {
+				_that.currentTime = (new Date()).getHours();
+				_that.getCurrentTime(_that.currentTime)
+			});
+			this.loadData();
+		},
+
+		methods: {
+			//时间段
+			getCurrentTime(data) {
+				console.log(data)
+				if (0 <= +data&&+data < 10) {
+					this.tabBars[5].desc = "正在快抢中";
+					this.tabCurrentIndex=5;
+				} else if (10 <= +data&&+data < 12) {
+					
+					this.tabBars[5].desc = "已开抢";
+					this.tabBars[6].desc = "正在快抢中";
+					this.tabCurrentIndex=6;
+				} else if (12 <= +data&&+data < 15) {
+					this.tabBars[5].desc = "已开抢";
+					this.tabBars[6].desc = "已开抢";
+					this.tabBars[7].desc = "正在快抢中";
+					this.tabCurrentIndex=7;
+				} else if (15 <= +data&&+data < 20) {
+					this.tabBars[5].desc = "已开抢";
+					this.tabBars[6].desc = "已开抢";
+					this.tabBars[7].desc = "已开抢";
+					this.tabBars[8].desc = "正在快抢中";
+					this.tabCurrentIndex=8;
+				} else {
+					this.tabBars[5].desc = "已开抢";
+					this.tabBars[6].desc = "已开抢";
+					this.tabBars[7].desc = "已开抢";
+					this.tabBars[8].desc = "已开抢";
+					this.tabCurrentIndex=9;
+				}
+			},
+			//加载数据
+			loadData(source) {
+				//获取当前轮播图得索引
+				let index = this.tabCurrentIndex;
+				//获取当前轮播面板对象
+				let navItem = this.tabBars[index];
+				//如果是刷新则重置初始值
+				if (source == "refresh") {
+					navItem.loadingType = true;
+					navItem.loaded = false;
+					navItem.pageNo = 1;
+				}
+				//检测没有数据
+				if (!navItem.loadingType) {
+					return;
+				}
+
+
+				uni.request({
+					url: `http://39.100.111.131:8080/fastbuy/hour_type/${navItem.cid}/min_id/${navItem.pageNo}`,
+					success: res => {
+						let {
+							code,
+							data
+						} = res.data;
+
+						//请求成功对应序号加一
+						navItem.pageNo++;
+						//结束下拉
+						if (source == "refresh") {
+							navItem.orderList = [];
+						}
+						//请求成功
+						if (code == 1) {
+							let shopList = data;
+							// 添加新增数据		
+							navItem.orderList = navItem.orderList.concat(shopList);
+							//请求成功序号增加,并且修改对应得加载状态
+							navItem.loaded = true;
+							if(shopList.length<5){
+								navItem.loadingType = false;
+								navItem.loadingText = '没有更多了';
+							}
+						} else {
+							//判断是否还有数据
+							navItem.loadingType = false;
+							navItem.loadingText = '没有更多了';
+						}
+					}, 
+					fail: () => {
+						//请求失败的情况下更改请求的次数
+						navItem.loadingText = '没有更多了';
+					},
+					complete: () => {
+						navItem.refreshing = false;
+					}
+				})
+			},
+
+			//商品详情页面
+			navToDetail(id) {
+				uni.navigateTo({
+					url: "/pages/index/shopdetails?id=" + id
+				})
+			},
+			//上拉加载更多
+			loadMore(e) {
+				console.log("触发")
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+				if (!currentTab.loadingType) {
+					currentTab.loadingText = '没有更多了';
+					return
+				}
+				currentTab.loadingText = "正在加载...";
+				this.loadData();
+			},
+			async tabChange(e) {
+				this.tabCurrentIndex = e.index;
+				//如果是第一页的话就请求数据
+				if (this.tabBars[this.tabCurrentIndex].pageNo === 1 && this.tabBars[this.tabCurrentIndex].loaded == false) {
+					//请求成功序号增加,并且修改对应得加载状态
+					this.tabBars[this.tabCurrentIndex].loaded = true;
+					this.loadData("tabChange");
+				}
+
+			},
+
+			//手指离开，下拉刷新触发修改状态
+			onrefresh(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+				this.iosRefresh = false;
+				currentTab.arrow = "↑";
+				currentTab.refreshText = "正在刷新...";
+				currentTab.refreshing = true;
+				this.loadData("refresh");
+				// this.pullrefresh(this.tabCurrentIndex, true)
+			},
+			//手指接触屏幕开始，下拉触发
+			onpullingdown(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+
+				//如果为刷新中则不准再次触发刷新
+				if (currentTab.refreshing) {
+					return;
+				}
+				this.iosRefresh = this.isIos
+				if (Math.abs(event.pullingDistance) > Math.abs(event.viewHeight)) {
+					this.arrow = "↑";
+					currentTab.refreshText = "释放立即刷新";
+				} else {
+					this.arrow = "↓";
+					currentTab.refreshText = "下拉可以刷新";
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+	.content {
+		background-color: #fff;	
+	}
+
+	.content-head {
+		width: 750upx;
+	}
+	.content-head-img{
+		width: 750upx;
+		height: 128upx;
+	}
+
+/* 	.img-hf {
+		width: 750upx;
+	} */
+
+	.slider {
+		flex: 1;
+		background-color: #f8f8f8;
+	}
+
+	/* 商品列表 */
+	.shop-list {
+		width: 710upx;
+		margin: 0upx 20upx 20upx;
+		height: 270upx;
+		background-color: #fff;
+		border-radius: 10upx;
+		flex-direction: row;
+	}
+
+	.shop-pictrue {
+		width: 250upx;
+		margin-right: 10upx;
+	}
+
+	.big-pict {
+		width: 270upx;
+		height: 270upx;
+		border-radius: 10upx;
+		overflow: hidden;
+	}
+
+	.shop-content {
+		padding: 16upx;
+		flex: 1;
+		position: relative;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.shop-title {
+		flex-direction: row;
+		font-size: 24upx;
+		color: #747474;
+	}
+
+	.shop-icn {
+		margin-right: 10upx;
+		width: 50upx;
+		height: 30upx;
+	}
+
+	.til {
+		flex: 1;
+		font-size: 28upx;
+		color: #545454;
+		text-overflow: ellipsis;
+		lines: 1;
+	}
+	
+	.shop-desc{
+		font-size: 22upx;
+		color: #949494;
+		text-overflow: ellipsis;
+		lines: 1;
+	}
+	
+	.sold-content{
+		flex-direction: row;
+		align-items: center;
+	}
+	.sold-content-w{
+		flex-direction: row;
+		align-items: center;
+	}
+	.hot-img{
+		width: 30upx;
+		height: 30upx;
+	}
+	.sold-num-hot{
+		font-size: 30upx;
+		color: #FF2A1F;
+		margin: 0 10upx;
+	}
+	.sold-num{
+		color: #545454;
+		font-size: 30upx;
+	}
+	.earn {
+		flex-direction: row;
+	}
+
+	.primary {
+		font-size: 24upx;
+		color: #ea3424;
+		
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+		background-color: #fdf6f2;
+	}
+
+	.shop-price {
+		align-items: center;
+		flex-direction: row;
+		position: relative;	
+		justify-content: space-between;
+	}
+
+	.now-price {
+		font-size: 40upx;
+		padding-right: 10upx;
+		color: #fb6b73;
+	}
+
+	.ago-price {
+		text-decoration: line-through;
+		color: #969696;
+		font-size: 28upx;
+	}
+
+	.progress-box {
+		align-items: center;
+		position: relative;
+		color: #969696;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.box-left {
+		flex-direction: row;
+		align-items: flex-end;
+	}
+
+	.price-icon {
+		font-size: 24upx;
+		color: #fb6b73;
+		padding-bottom: 6upx;
+	}
+
+	.quan {
+		flex-direction: row;
+		height: 31upx;
+		align-items: center;
+		font-size: 20upx;
+		border-style: solid;
+		border-color: #f51515;
+		border-width: 1upx;
+		position: relative;
+		margin-right: 40upx;
+	}
+
+	.quan-img {
+		position: absolute;
+		left: -1upx;
+		width: 30upx;
+		height: 30upx;
+	}
+
+	.quan-price {
+		font-size: 26upx;
+		margin-left: 20upx;
+		padding: 0 6upx;
+		color: #f51515;
+	}
+
+	.tui-white {
+		background-color: #FFFFFF !important;
+		margin-bottom: 10upx;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.tui-gray {
+		background-color: #fafafa;
+	}
+
+	.tui-slider-box {
+		width: 750upx;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.tui-slider {
+		width: 690upx;
+		height: 300upx;
+		border-radius: 12upx;
+		overflow: hidden;
+	}
+
+	.tui-img-radius {
+		border-radius: 12upx;
+	}
+
+	.tui-frame {
+		width: 690upx;
+		height: 300upx;
+		background-color: #fff;
+	}
+
+	.tui-slider-img {
+		width: 690upx;
+		height: 300upx;
+	}
+
+	.tui-indicator {
+		width: 690px;
+		height: 20px;
+		item-color: rgba(255, 255, 255, 0.4);
+		item-selected-color: #FFFFFF;
+		item-size: 14px;
+		position: absolute;
+		bottom: 24px;
+		left: 0;
+	}
+
+	.tui-loading {
+		margin-right: 15px;
+		height: 60px;
+		width: 60px;
+		color: #999999;
+	}
+
+	.tui-list {
+		flex: 1;
+		padding-top: 16upx;
+	}
+
+	/* .tab-bar-item {
+		height: 80px;
+		width: 150upx;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-size: 30upx;
+		
+	} */
+
+	/* .tab-bar-title {
+		height: 80px;
+		line-height: 80px;
+		font-size: 32px;
+		color: #999;
+		font-weight: 400;
+	} */
+
+	/* .tui-active {
+		color: #FF0000;
+		border-bottom-width: 4px;
+		border-style: solid;
+		border-color: #FF0000;
+		text-align: center;
+	} */
+
+	.tui-loadmore {
+		height: 100px;
+		width: 750px;
+		flex-direction: column;
+		justify-content: center;
+		position: relative;
+		align-items: center;
+	}
+
+	.loadmore-text {
+		font-size: 26px;
+		text-align: center;
+		color: #999999;
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+
+	.loadmore-line {
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		border-bottom-color: #e5e5e5;
+		width: 320px;
+		position: absolute;
+		z-index: -1;
+	}
+
+	.tui-refresh {
+		width: 750px;
+		height: 80px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.refresh-text {
+		text-align: center;
+		font-size: 26px;
+		color: #999999;
+	}
+
+	.ios-arrow {
+		color: #999999;
+		font-size: 42px;
+		font-weight: 300;
+		padding-right: 20px;
+		margin-left: -75px;
+	}
+</style>

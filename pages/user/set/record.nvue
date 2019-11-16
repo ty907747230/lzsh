@@ -1,0 +1,252 @@
+<template>
+	<div class="wrap">
+		<seize-seat typeimg='empty'  v-if="datalist.length==0"></seize-seat>
+		<list v-if="datalist.length!=0" class="tui-list" @loadmore="loaddata"  loadmoreoffset="5">
+			<!-- 刷新组件 -->
+			<refresh class="tui-refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="refreshing? 'show' : 'hide'">
+				<loading-indicator class="tui-loading"></loading-indicator>
+				<text class="refresh-text">{{refreshText}}</text>
+			</refresh>
+			<cell v-for="(item,index) in datalist" :key='index'>
+				<div class="bill-item" @click="navtobillxq(item.id)">
+					<div class="bill-item-top">
+						<view class="bill-item-top-left" v-if="item.status==0">
+							<text class="flicon fail">&#xe777;</text>
+							<text class="bill-mes bill-d">{{item.message}}</text>
+						</view>
+						<view class="bill-item-top-left" v-if="item.status==1">
+							<text class="flicon shenhe">&#xe62f;</text>
+							<text class="bill-mes bill-d">{{item.message}}</text>
+						</view>
+						<view class="bill-item-top-left" v-if="item.status==2">
+							<text class="flicon bohui">&#xe620;</text>
+							<text class="bill-mes bill-d">{{item.message}}</text>
+						</view>
+						<view class="bill-item-top-left" v-if="item.status==6">
+							<text class="flicon succ">&#xe605;</text>
+							<text class="bill-mes bill-d">{{item.message}}</text>
+						</view>
+						<text class="bill-money">- ￥{{item.money}}</text>
+					</div>
+					<div class="bill-item-bottom">
+						<text class="bill-t"></text>
+						<text class="bill-d">{{item.ctime}}</text>
+					</div>
+				</div>
+			</cell>
+	
+			<!-- 加载组件 -->
+			<cell class="tui-loadmore">
+				<text class="loadmore-line" v-if="!loadingType"></text>
+				<text class="loadmore-text tui-gray">{{loadingType?'正在加载...':'没有更多了'}}</text>						
+			</cell>
+		</list>
+	</div>
+</template>
+
+<script>
+	import seizeSeat from '@/components/seize-seat.nvue'
+	export default {
+		data(){
+			return{
+				page:1,
+				per_page:14,
+				token:'',
+				datalist:[],
+				refreshText:'',
+				refreshing:'',
+				loadingType:true,
+				loadingText:''
+			}
+		},
+		components:{
+			seizeSeat
+		},
+		created() {
+			this.token=uni.getStorageSync('lzd-user').token;
+			this.loaddata()
+		},
+		methods:{
+			navtobillxq(){
+				// uni.navigateTo({
+				// 	url:'/pages/user/billxq'
+				// })
+			},
+			loaddata(source){
+				//如果是刷新则重置初始值
+				if (source == "refresh") {
+					this.loadingType = true;
+					this.loaded = false;
+					this.page = 1;
+				}
+				//检测没有数据
+				if (!this.loadingType) {
+					return;
+				}
+				uni.request({
+					url:'http://39.100.111.131:8088/UserCenter/InCashOut',
+					method:'POST',
+					data:{
+						token:this.token,
+						page:this.page,
+						per_page:this.per_page
+					},
+					success:(res)=>{
+						let{
+							code,
+							data,
+							msg
+						}=res.data;
+						this.page++;
+						//结束下拉
+						if (source == "refresh") {
+							this.datalist = [];
+							this.refreshing = false;
+						}
+						if(code==2000){
+							let list=data.out_money_notes;
+							this.datalist=this.datalist.concat(list);
+							this.loadingType=list.length==this.per_page?true:false
+						}else{
+							this.loadingType=false
+							uni.showToast({
+								title:msg,
+								icon:'none'
+							})
+						}
+					},
+					fail:()=>{
+						this.refreshing = false;
+						uni.showToast({
+							title:'荔枝开小差了，请联系客服',
+							icon:'none'
+						})
+					}
+				})
+			},
+			//手指离开，下拉刷新触发修改状态
+			onrefresh(event) {		
+				this.refreshText = "正在刷新...";
+				this.refreshing = true;
+				this.loaddata("refresh");
+			},
+			//手指接触屏幕开始，下拉触发
+			onpullingdown(event) {
+				//如果为刷新中则不准再次触发刷新
+				if (this.refreshing) {
+					return;
+				}
+				if (Math.abs(event.pullingDistance) > Math.abs(event.viewHeight)) {
+					this.refreshText = "↑ 释放立即刷新";
+				} else {
+					this.refreshText = "↓ 下拉可以刷新";
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+	.wrap{
+		background-color: #f7f7f7;
+	}
+	.flicon{
+		font-family: flicon;
+		font-size: 28upx;
+	}
+	.tui-refresh {
+		width: 750px;
+		height: 80px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+	.refresh-text {
+		text-align: center;
+		font-size: 26px;
+		color: #999999;
+	}
+	.tui-loadmore {
+		height: 100px;
+		width: 750px;
+		flex-direction: column;
+		justify-content: center;
+		position: relative;
+		align-items: center;
+	}
+	
+	.loadmore-text {
+		font-size: 26px;
+		text-align: center;
+		color: #999999;
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+	
+	.loadmore-line {
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		border-bottom-color: #e5e5e5;
+		width: 320px;
+		position: absolute;
+		z-index: -1;
+	}
+	
+	.bill-item{
+		width: 730upx;
+		padding: 30upx 20upx;
+		margin: 0 10upx;
+		background-color: #FFFFFF;
+		border-color: #EFEFEF;
+		border-bottom-width: 1upx;
+		border-style: solid;
+	}
+	.bill-item-top{
+		width: 690upx;
+		padding: 0 10upx;
+		justify-content: space-between;
+		margin-bottom: 16upx;
+		flex-direction: row;
+	}
+	.bill-item-top-left{
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+	}
+	.bill-item-bottom{
+		flex-direction: row;
+		width: 690upx;
+		justify-content: space-between;
+	}
+	.bill-mes{
+		margin-left: 10upx;
+		font-size: 28upx;
+		width:450upx;
+		lines: 1;
+		text-overflow: ellipsis;
+	}
+	.fail{
+		color: #fc6702;
+	}
+	.shenhe{
+		color: #0a7bfa;
+	}
+	.bohui{
+		color: #d81e06;
+	}
+	.succ{
+		color: #94f808;
+	}
+	.bill-money{
+		font-size: 28upx;
+		color: #d4237a;
+	}
+	.bill-t{
+		font-size: 24upx;
+		color: #949494;
+	}
+	.bill-d{
+		font-size: 24upx;
+		color: #949494;
+	}
+</style>

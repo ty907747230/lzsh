@@ -1,0 +1,156 @@
+<template>
+	<div>
+		<div v-if="drag" class="wrap tab-bar-scroll">
+			<scroller class="scroll" scrollDirection="horizontal" showScrollbar="false">
+				<div
+					class="tab-bar-item tab-bar-scroll-width"
+					v-for="(tabBar, t) in tabBars"
+					:key="t"
+					:ref="tabBar.id + t"
+					@click="change(t)"
+					:class="[tabIndex === t ? 'actived' : '']"
+				>
+					<div class="tab-bar-title" >
+						<text class="tab-bar-title-wenzi" :class="[tabIndex === t ? 'active' : '']">{{tabBar.id}}</text>
+						<text class="tab-bar-title-wenzi-b" :class="[tabIndex === t ? 'active' : '']">{{tabBar.desc}}</text>
+					</div>
+				</div>
+			</scroller>
+		</div>
+		<div v-else class="wrap tab-bar">
+			<div
+				class="tab-bar-item"
+				v-for="(tabBar, t) in tabBars"
+				:key="t"
+				:ref="tabBar.id + t"
+				@click="change(t)"
+			>
+				<text class="tab-bar-title" :class="[tabIndex === t ? 'active' : '']">{{
+					tabBar.name
+				}}</text>
+			</div>
+		</div>
+	</div>
+</template>
+
+<script>
+const dom = weex.requireModule('dom');
+
+export default {
+	props: {
+		drag: {
+			type: Boolean,
+			default: true
+		},
+		tabBars: {
+			type: Array,
+			default: function(e) {
+				return [];
+			}
+		},
+		tabIndex: {
+			type: Number,
+			default: 0
+		}
+	},
+	watch:{
+		tabIndex(newVal){
+			this.change(newVal)
+		}
+	},
+	mounted() {
+		console.log(this.tabIndex)
+		this.change(this.tabIndex,true)	
+	},
+	methods: {
+		async change(index, bool) {
+			let ret = {
+				index: index
+			};
+
+			if(!bool){
+				this.$emit('tabChange', ret);
+			}
+			const el = this.$refs[this.tabBars[index].id + index][0]
+			let elSize = await this.getElSize(el);
+			console.log(elSize.left + elSize.width)
+			
+			if (elSize.left + elSize.width >= 300||elSize.left + elSize.width==150) {
+			    let idx = index - 2;
+			    let newEl = this.$refs[this.tabBars[idx].id + idx][0]
+				console.log(newEl)
+			    dom.scrollToElement(newEl, {});
+			    return;
+			}
+			if (elSize.left < 0) {
+			    dom.scrollToElement(el, {});
+			}
+			
+		},
+		getElSize(el) { //得到元素的size
+		    return new Promise((res, rej) => {
+		        const result = dom.getComponentRect(el, option => {
+		            res(option.size);
+		        })
+		    })
+		}
+	}
+};
+</script>
+<style>
+.wrap {
+	height: 90px;
+	width: 750px;
+	flex-direction: row;
+	font-size: 30px;
+	border-bottom-width: 1px;
+	border-color: #eee;
+}
+.tab-bar {
+	justify-content: space-between;
+	padding-left: 30px;
+	padding-right: 30px;
+	
+}
+.scroll {
+	height: 90px;
+	width: 750px;
+	flex-direction: row;
+	background-color: #727272;
+}
+.tab-bar-item {
+	height: 90px;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	border-radius: 20upx;
+}
+.tab-bar-scroll-width {
+	width: 150px;
+}
+.tab-bar-title {
+	flex-direction: column;
+	justify-content: space-between;
+	padding: 10upx 0;
+	align-items: center;
+	height: 90px;
+	color: #303133;
+	border-bottom-width: 4px;
+	border-color: transparent;
+}
+.tab-bar-title-wenzi{
+	font-size: 34upx;
+	color: #fff;
+}
+.tab-bar-title-wenzi-b{
+	font-size: 28upx;
+	color: #fff;
+}
+.active {
+	color: #fff;
+}
+.actived{
+	background-color: #fb5f69;
+}
+</style>
+

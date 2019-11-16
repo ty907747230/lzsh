@@ -1,0 +1,254 @@
+<template>
+	<div class="page">
+		<div class="back-btn">
+			<text class="btnicon flicon" @click="backclick">&#xe622;</text>
+		</div>
+		<div class="title">
+			<text class="title-content">请输入验证码</text>
+			<text class="title-tips">请输入 {{mobile}} 收到的验证码</text>
+		</div>
+		<div class="code-input-main">
+			<div class="code-input-main-item"><text class="code-input-content">{{code[0]}}</text></div>
+			<div class="code-input-main-item"><text class="code-input-content">{{code[1]}}</text></div>
+			<div class="code-input-main-item"><text class="code-input-content">{{code[2]}}</text></div>
+			<div class="code-input-main-item"><text class="code-input-content">{{code[3]}}</text></div>
+			<input autofocus="true" class="code-input-input" v-model="code" maxlength="6" type="number" @input="handleInput" />
+		</div>
+		<div class="res-button">
+			<text @click="getCode" class="res-btn" :class="[isable?'res-suc':'']">{{waitMsg}}</text>
+		</div>
+	</div>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				mobile: "",
+				code: "",
+				waitMsg: '重新获取验证码',
+				isable: true //是否准许点击
+			}
+		},
+		created() {
+			this.mobile = uni.getStorageSync("lzd-phone");
+			//倒计时
+			this.timeing();
+		},
+		methods: {
+			//返回按钮
+			backclick() {
+				uni.navigateBack({
+					delta: 1
+				});
+			},
+			timeing() {
+				//检测是否在待机时
+					// 获取定时
+					var s = 60;
+					this.timeId = setInterval(() => {
+						s--;
+						this.waitMsg = `验证码已发送(${s}s)`;
+						if (s == 0) {
+							//倒计时结束
+							this.isable = false;
+							this.waitMsg = "重新获取验证码";
+							if (this.timeId) {
+								clearInterval(this.timeId)
+							}
+						}
+					}, 1000);			
+			},
+			//获取验证码
+			getCode() {
+				if(this.isable){
+					return
+				}
+				this.isable=true
+				this.timeing();
+				uni.showLoading({
+					mask:true
+				});
+				//获取验证码
+				uni.request({
+					url: `http://39.100.111.131:8088/login/GetPhoneCode?phone=${this.mobile}&category=authentication`,
+					success() {
+						
+					},
+					complete:()=>{
+						uni.hideLoading();
+					}
+				})
+			},
+
+			//输入事件
+			handleInput(e) {
+				if (e.value.length == 4) {
+					this.code = e.value;
+					console.log(this.code)
+					uni.showLoading({
+						mask:true
+					});
+					this.login();
+				}
+			},
+
+			//登录
+			login() {
+				console.log(this.mobile, this.code)
+				uni.request({
+					url: `http://39.100.111.131:8088/login/index?phone=${this.mobile}&code=${this.code}`,
+					success: (res) => {
+						let {
+							code,
+							msg,
+							data
+						} = res.data;
+						console.log(res)
+						//老用户
+						if (code == 2000) {
+							
+							//因为nvue页面和vue页面不共用store，所以手动存储
+							uni.setStorageSync('lzd-user', data);
+							uni.postMessage({user:data})
+							//请求成功
+							uni.showToast({
+								title:msg,
+								icon:"none"
+							})
+							//重定向
+							uni.navigateBack({
+								delta: 3
+							});
+							uni.hideKeyboard()
+						}
+						//新用户
+						else if (code == 2001) {
+							uni.navigateTo({
+								url: '/pages/user/yqcode?mobile=' + this.mobile
+							})
+							
+						} 
+						//登录失败
+						else {
+							uni.showToast({
+								title: msg,
+								icon: 'none'
+							});
+							this.code="";
+						}
+					},
+					fail: () => {
+						uni.showToast({
+							title: '网络不好',
+							icon: 'none'
+						})
+					},
+					complete: () => {
+						uni.hideLoading()
+					}
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.flicon {
+		font-family: flicon;
+		font-size: 40upx;
+	}
+	.page {
+		position: absolute;
+		bottom: 0;
+		top: 0;
+		width: 750upx;
+	}
+
+	.back-btn {
+		height: 200upx;
+		padding: 50upx;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.btnicon {
+		margin-top: 20upx;
+		font-size: 40upx;
+	}
+
+	.title {
+		height: 160upx;
+		padding:0 40upx;
+		flex-direction: column;
+		/* align-items: center; */
+
+	}
+
+	.title-content {
+		font-size: 60upx;
+		color: #464646;
+		margin-bottom: 20upx;
+	}
+
+	.title-tips {
+		font-size: 30upx;
+		color: #848484;
+	}
+
+	.code-input-input {
+		height: 60upx;
+		position: absolute;
+		left: 0;
+		right: 0;
+		color: transparent;
+		margin-left: -300%;
+		top: 0;
+	}
+
+	.code-input-main {
+		width: 750upx;
+		margin-top: 80upx;
+		flex-direction: row;
+		justify-content: space-between;
+		padding: 0 50upx;
+		height: 60upx;
+		/* align-items: flex-end; */
+	}
+
+	.code-input-main-item {
+		width: 120upx;
+		border-style: solid;
+		border-bottom-width: 2upx;
+		text-align: center;
+		font-size: 30px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+		
+	.code-input-content {
+		font-size: 50upx;
+	}
+
+	.res-button {
+		flex-direction: row;
+		width: 750upx;
+		justify-content: center;
+		margin-top: 70upx;
+	}
+
+	.res-btn {
+		padding: 30upx;
+		font-size: 26upx;
+		color: #8F8D8E;
+
+	}
+
+	.res-suc {
+		border-radius: 46upx;
+		color: #F56657;
+		background-color: #ECF6FD;
+
+	}
+</style>

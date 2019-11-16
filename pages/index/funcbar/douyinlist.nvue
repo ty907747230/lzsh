@@ -1,0 +1,536 @@
+<template>
+	<div class="boxs" ref="appBox">
+		<list v-if="cellHeight > 0" :pagingEnabled="true" :show-scrollbar="false" @scrollend="onScrollend">
+			<cell v-for="(item,index) in lists" :key="index" :ref="'cell_' + index" @click="videoStop(item.id)">
+				<div class="item" :style="{height:cellHeight}">
+					<video :style='videoStyle'  class="item-video" :src="item.dy_video_url" :play-status="item.state" @start="onstart(item)"
+					 @finish="onfinish(item)" auto-play="true" controls="nocontrols"></video>
+					<div class="right-btn">
+						<div class="btn-item" @click="shouc">
+							<text class="flicon right-item">&#xe604;</text>
+							<text class="right-item-w">{{yishou(item.dy_video_like_count)}}</text>
+						</div>
+						<div class="btn-item" @click="download(item.dy_video_url)">
+							<text class="flicon right-item">&#xe647;</text>
+							<text class="right-item-w">下载</text>
+						</div>
+						<div class="btn-item" @click="copywenan(item.itemdesc)">
+							<text class="flicon right-item">&#xe708;</text>
+							<text class="right-item-w">文案</text>
+						</div>
+					</div>
+					<div class="back-btn" @click="navback">
+						<text class="flicon">&#xe653;</text>
+					</div>
+					<!-- 文案 -->
+					<div class="wenan">
+						<text class="wenan-zi">{{item.dy_video_title}}</text>
+					</div>
+					
+					<div class="shop-item" @click="navToDetail(item.itemid)">
+						<div class="shop-pictrue">
+							<image lazy-load="true" class="big-pict" mode="widthFix" :src="item.itempic"></image>
+						</div>
+						
+						<div class="shop-content">
+							<!-- 标题 -->
+							<div class="shop-title">
+								<image  class="shop-icn" :src="item.shoptype=='C'?'/static/index/icon_tb.png':'/static/index/icon_tm_s.png'"
+								 mode="aspectFit"></image>
+								<text class="til">{{item.itemshorttitle}}</text>
+							</div>
+
+							<!-- 价格 -->
+							<div class="shop-price">
+								<div class="shop-price-left">
+									<text class="ago-price-w">原价:</text>
+									<text class="ago-price">￥{{item.itemprice}}</text>
+								</div>
+								
+								<div class="quan">
+									<image src="/static/index/quanzi.png" mode="" class="quan-img">
+									</image>
+									<text class="quan-price"> ￥{{item.couponmoney}}</text>
+								</div>
+							</div>		
+							<div class="progress-box">
+								<div class="box-left">
+									<text class="price-icon">￥</text>
+									<text class="now-price">{{item.itemendprice}}</text>
+								</div>
+								<text class="sold-num">已售{{yishou(item.itemsale)}}件</text>
+							</div>
+							
+						</div>
+					</div>
+
+				</div>
+			</cell>
+		</list>
+	</div>
+</template>
+
+<script>
+	const dom = weex.requireModule('dom');
+	export default {
+		data() {
+			return {
+				cellHeight: 0,
+				currentIndex: 0,
+				contentOffsetY: 0,
+				loadIng: false,
+				count: 0,
+				lists: [],
+				clearMax: 30,
+				clearNum: 20,
+				pageNo: 1,
+				cid: 1,
+				loadingType: true,
+				videoStyle:{}
+			}
+		},
+		mounted() {
+			this.wHeight = uni.getSystemInfoSync().windowHeight;
+			console.log(this.wHeight)
+			if(plus.os.name == 'iOS'){
+				this.videoStyle={
+					'width': '750px',
+					'flex': 1
+				};
+			}else{
+				this.videoStyle={
+					'width': '750px',
+					'height':this.wHeight
+				}
+			}
+			this.currentIndex = uni.getStorageSync('videoindex');
+			var tabs = uni.getStorageSync('tabvideo');
+			this.lists = tabs.orderList;
+			this.pageNo = tabs.pageNo;
+			this.cid = tabs.cid;
+			this.loadingType = tabs.loadingType;
+			uni.removeStorage({
+				key: "tabvideo"
+			});
+			uni.removeStorage({
+				key: "videoindex"
+			});
+			setTimeout(() => {
+				//取页面组件高度
+				dom.getComponentRect(this.$refs.appBox, option => {
+					this.cellHeight = option.size.height;
+				});
+			}, 100);
+			setTimeout(() => {
+				this.$nextTick(() => {
+					let el = this.$refs['cell_' + this.currentIndex][0];
+					dom.scrollToElement(el, {
+						offset: 0,
+						animated: false
+					});
+				});
+			}, 300)
+		},
+		methods: {
+			//修改已售的显示
+			yishou(data) {
+				if (data >= 10000) {
+					return (data / 10000).toFixed(1) + 'w'
+				} else {
+					return data
+				}
+			},
+			shouc(){
+				
+			},
+			download(url){
+				uni.showLoading({
+					title:"正在下载",
+					mask:true
+				})
+				var downLoader = plus.downloader.createDownload(url, {		
+				}, function(download, status) {
+					if (status == 200) {
+						plus.gallery.save(download.filename, function() {
+							console.log(download.filename)
+							uni.hideLoading()
+							uni.showToast({
+								title:"下载成功",
+								icon:"none"
+							})
+							console.log("成功")
+						}, function(e) {
+							uni.hideLoading()
+							console.log("失败")
+						});
+					} else {
+					uni.hideLoading()
+					}
+				})
+				downLoader.start();
+			},
+			copywenan(data){
+				uni.setClipboardData({
+					data:data,
+					success:()=>{
+						uni.showToast({
+							icon:"none",
+							title:"复制文案成功"
+						})
+					}
+				})
+			},
+			//商品详情页面
+			navToDetail(id) {
+				let video = this.lists[this.currentIndex];
+				if (video.state == "play") {
+					this.$set(video, 'state', "pause");
+				}
+				uni.navigateTo({
+					url: "/pages/index/shopdetails?id=" + id
+				})
+			},
+			// 暂停当前  
+			videoStop() {
+				console.log(1)
+				// let type = this.lists[this.currentIndex].active;
+				let video = this.lists[this.currentIndex];
+				if (video.state == "play") {
+					this.$set(video, 'state', "pause");
+				} else {
+					this.$set(video, 'state', "play");
+				}
+			},
+			// 暂停全部
+			stopAll() {
+				this.lists.forEach((item) => {
+					this.$set(item, 'active', false);
+					delete item.state;
+				});
+			},
+			playNow() {
+				this.$set(this.lists[this.currentIndex], 'active', true);
+			},
+			onScrollend(e) {
+				let originalIndex = this.currentIndex;
+				let isNext = false;
+				console.log(e.contentOffset.y, this.contentOffsetY);
+				if (e.contentOffset.y < this.contentOffsetY) {
+					isNext = true;
+				}
+				this.contentOffsetY = e.contentOffset.y;
+				this.currentIndex = Math.round(Math.abs(this.contentOffsetY) / (e.contentSize.height / this.lists.length));
+				console.log(this.currentIndex);
+				if (originalIndex !== this.currentIndex) {
+					this.stopAll();
+					this.playNow();
+				}
+				if (isNext) {
+					this.loadData();
+				}
+			},
+			navback(){
+				uni.navigateBack({
+					delta:1
+				})
+			},
+			loadData() {
+				if (this.loadIng) {
+					return;
+				}
+				this.loadIng = true;
+				uni.request({
+					url: `http://v2.api.haodanku.com/get_trill_data/apikey/zhouzhou/min_id/${this.pageNo}/back/10/cat_id/${this.cid}?`,
+					success: res => {
+						let {
+							code,
+							data
+						} = res.data;
+						//请求成功对应序号加一
+						this.pageNo++;
+						//请求成功
+						if (code == 1) {
+							let shopList = data;
+							// 添加新增数据		
+							this.lists = this.lists.concat(shopList);
+						} else {
+							this.loadingType = "false"
+						}
+					},
+					fail: () => {
+						//请求失败，加入false标志
+						//navItem.isquest = false;
+						//请求失败的情况下更改请求的次数
+						this.loadingText = '没有更多了';
+					},
+					complete: () => {
+						this.refreshing = false;
+						this.loadIng = false;
+					}
+				})
+			},
+
+			onstart(item) {
+				console.log(item);
+				item._play = true;
+				setTimeout(() => {
+					if (item._play) {
+						this.$set(item, 'state', 'play');
+					}
+				}, 350);
+			},
+
+			onfinish(item) {
+				console.log(item);
+				item._play = false;
+				this.$set(item, 'state', 'pause');
+				this.onstart(item);
+			},
+			onfail(event) {
+				uni.showToast({
+					title: "视频已失效",
+					icon: "none"
+				})
+			}
+		},
+	}
+</script>
+<style>
+	.flicon {
+		font-family: flicon;
+		font-size: 60upx;
+		color: #FFFFFF;
+	}
+
+	.bofang {
+		width: 100upx;
+		height: 100upx;
+	}
+
+	.boxs {
+		flex: 1;
+		background-color: #000000;
+	}
+
+	.item {
+		flex: 1;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+	}
+
+	.item-video {
+		/* position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		right: 0; */
+		/* width: 750px;
+		flex: 1; */
+		
+	}
+	.back-btn{
+		height: 80upx;
+		width: 80upx;
+		top: 60upx;
+		left: 0upx;
+		position: absolute;
+		/* background-color: #000000; */
+		border-radius: 80upx;
+		align-items: center;
+		justify-content: center;
+	}
+	.wenan{
+		position: absolute;
+		bottom: 290upx;
+		left: 20upx;
+		width: 500upx;
+	}
+	.wenan-zi{
+		color: #FFFFFF;
+		font-size: 26upx;
+	}
+	.right-btn{
+		position: absolute;
+		flex-direction: column;
+		bottom: 280upx;
+		right: 30upx;
+	}
+	.btn-item{
+		margin-bottom: 20upx;
+		justify-content: center;
+		align-items: center;
+	}
+	.right-item{
+		font-size: 60upx;
+		width: 80upx;
+		height: 80upx;
+		flex-direction: row;
+		text-align: center;
+		line-height: 80upx;
+		border-radius: 80upx;
+		margin-bottom: 10upx;
+		background-color: rgba(217,216,216,0.3);
+	}
+	.right-item-w{
+		color: #FFFFFF;
+		font-size: 24upx;
+	}
+
+	.shop-item {
+		box-shadow:0 0  10upx #eee;
+		height: 230upx;
+		border-radius: 12upx;
+		width: 600upx;
+		position: absolute;
+		bottom: 20upx;
+		left: 20upx;
+		flex-direction: row;
+		background-color: #FFFFFF;
+	}
+	.shop-pictrue {
+		width: 230upx;
+		margin-right: 10upx;
+	}
+	.big-pict {
+		width: 230upx;
+		height: 230upx;
+		border-radius: 10upx;
+		overflow: hidden;
+	}
+	
+	.shop-content {
+		padding: 10upx;
+		flex: 1;
+		position: relative;
+	}
+	
+	.shop-title {
+		flex-direction: row;
+	}
+	
+	.shop-icn {
+		margin-right: 10upx;
+		width: 50upx;
+		height: 30upx;
+	}
+	
+	.til {
+		flex: 1;
+		font-size: 28upx;
+		/* overflow: hidden; */
+		text-overflow: ellipsis;
+		lines: 1;
+	}
+	
+	.earn {
+		margin-top: 18upx;
+		flex-direction: row;
+	}
+	
+	.primary {
+		border-color: #ea3424;
+		border-style: solid;
+		border-width: 1upx;
+		font-size: 24upx;
+		color: #ea3424;
+		margin: 10upx 0;
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+		background-color: #fdf6f2;
+	}
+	
+	.quan {
+		flex-direction: row;
+		height: 31upx;
+		align-items: center;
+		font-size: 20upx;
+		border-style: solid;
+		border-color: #f51515;
+		border-width: 1upx;
+		position: relative;
+		margin-right: 10upx;
+	}
+	
+	.quan-img {
+		position: absolute;
+		left: -1upx;
+		width: 30upx;
+		height: 30upx;
+	}
+	
+	.quan-price {
+		font-size: 26upx;
+		margin-left: 20upx;
+		padding: 0 6upx;
+		color: #f51515;
+	}
+	
+	.middle {
+		background-color: #fcf0f0;
+		font-size: 24upx;
+		color: #ed7236;
+		margin: 10upx;
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+	}
+	
+	.shop-price {
+		align-items: center;
+		flex-direction: row;
+		position: relative;
+		margin-top: 15upx;
+		justify-content: space-between;
+	}
+	
+	.shop-price-left{
+		flex-direction: row;
+	}
+	
+	.now-price {
+		/* font-weight: bold; */
+		font-size: 50upx;
+		padding-right: 10upx;
+		color: #fb6b73;
+	}
+	.ago-price-w{
+		color: #969696;
+		font-size: 24upx;
+	}
+	.ago-price {
+		text-decoration: line-through;
+		color: #969696;
+		font-size: 24upx;
+	}
+	.progress-box {
+		margin-top: 15upx;
+		align-items: center;
+		position: relative;
+		color: #969696;
+		flex-direction: row;
+		justify-content: space-between;
+		margin-bottom: 10upx;
+	}
+	
+	.box-left {
+		flex-direction: row;
+		align-items: flex-end;
+	}
+	
+	.price-icon {
+		font-size: 30upx;
+		color: #fb6b73;
+		padding-bottom: 6upx;
+	}
+	.now-price {
+		/* font-weight: bold; */
+		font-size: 50upx;
+		padding-right: 10upx;
+		color: #fb6b73;
+	}
+	.sold-num {
+		color: #969696;
+		font-size: 24upx;
+	}
+	
+</style>

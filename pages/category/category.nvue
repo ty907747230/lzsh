@@ -1,0 +1,206 @@
+<template>
+	<div class="container">
+		<scroller class="scroller-left" show-scrollbar="false">
+			<div class="title" @click="changeItem(index)" v-for="(item,index) in categorySum" :key="index" :class="[currentItem==index?'active':'']">
+				<text class="title-item" :class="[currentItem==index?'activeT':'']">{{item.main_name}}</text>
+			</div>
+		</scroller>
+		<scroller class="scroller-right" show-scrollbar="false">
+			<div v-if="index==currentItem" v-for="(item,index) in categorySum" :key="index">
+				<div :key="indexc" class="right-div" v-for="(itemc,indexc) in item.data">
+					<div class="category-title">
+						<div class="border-line"></div>
+						<text class="title-icon"> {{itemc.next_name}}</text>
+						<div class="border-line"></div>
+					</div>
+					<div class="right-content">
+						<div class="category-content" @click="navtoshop(item.cid,items.son_name)" v-for="(items,indexs) in itemc.info"
+						 :key="indexs">
+							<image class="img" :src="items.imgurl" mode="aspectFit"></image>
+							<text class="category-desc">{{items.son_name}}</text>
+						</div>
+					</div>
+				</div>
+			</div>
+		</scroller>
+
+	</div>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				statusBarHeight: '0wx', //状态栏占位高度
+				// categoryList: ["女装", "母婴", "美妆", "居家", "鞋品", "美食", "文娱", "数码", "男装", "内衣", "箱包", "配饰", "户外", "家装"], //分类列表
+				currentItem: 0, //当前选中得分类
+				categorySum: [], //总的分类明细
+				currentCategory: [] //当前分类内容
+			}
+		},
+		//进入页面请求数据
+		created() {
+			console.log("渲染页面")
+			//获取状态栏高度给顶部占位节点
+			uni.getSystemInfo({
+				success: res => {
+					this.statusBarHeight = res.statusBarHeight + 'wx';
+				}
+			})
+			this.loadData();
+		},
+		methods: {
+			//分类类别改变
+			changeItem(index) {
+				this.currentItem = index;
+			},
+			//跳转到商品页
+			navtoshop(cid, q) {
+				console.log(cid, q)
+				uni.navigateTo({
+					url: `/pages/category/category-shop?cid=${cid}&q=${q}`,
+					success: res => {},
+					fail: () => {},
+					complete: () => {}
+				});
+			},
+			loadData() {
+				uni.showLoading({
+					mask:true
+				})
+				uni.request({
+					url: "http://39.100.111.131:8080/super_classify",
+					success: res => {
+					
+						let {
+							code,
+							general_classify
+						} = res.data;
+						if (code == 1) {
+							this.categorySum = general_classify;
+						}
+					},
+					fail: () => {
+						uni.showToast({
+							title: "荔枝开小差了，请联系客服"
+						})
+					},
+					complete: () => {
+						uni.hideLoading()
+					}
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		background-color: #f8f8f8;
+		position: absolute;
+		top: 0;
+
+		bottom: 0;
+		width: 750upx;
+		flex-direction: row;
+	}
+
+	.scroller-left {
+		width: 150upx;
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		padding: 10upx;
+		border-right-width: 1px;
+		border-right-color: #CCCCCC;
+		border-style: solid;
+		border-top-width: 1px;
+		border-top-color: #CCCCCC;
+	}
+
+	.active {
+		border-radius: 80upx;
+		background-color: #FF0000;
+	}
+
+	.activeT {
+		color: #FFFFFF;
+	}
+
+	.title {
+		width: 130upx;
+		height: 60upx;
+		margin: 20upx 0;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.title-item {
+		font-size: 30upx;
+	}
+
+	.scroller-right {
+		background-color: #FFFFFF;
+		width: 600upx;
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 149upx;
+
+		border-top-width: 1px;
+		border-top-color: #CCCCCC;
+
+	}
+
+	.right-content {
+		width: 600upx;
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+
+	.category-title {
+		/* background-color: #ECF6FD; */
+		height: 100upx;
+		flex-direction: row;
+		align-items: center;
+		
+		justify-content: center;
+	}
+	.border-line{
+		width: 30upx;
+		border-bottom-width: 2upx;
+		border-style: solid;
+		border-color:#646c7d;;
+		
+	}
+	.title-icon {
+		font-size: 30upx;
+		padding: 0 30upx;
+		color: #646c7d;
+	}
+
+	
+
+	.category-content {
+		width: 199upx;
+		height: 200upx;
+		margin-bottom: 20upx;
+		flex-direction: column;
+		align-items: center;
+
+	}
+
+	.img {
+		width: 120upx;
+		height: 120upx;
+		margin-bottom: 20upx;
+		overflow: hidden;
+	}
+
+	.category-desc {
+		font-size: 26upx;
+		color: #434343;
+	}
+</style>

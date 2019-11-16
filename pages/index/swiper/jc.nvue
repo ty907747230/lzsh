@@ -1,0 +1,78 @@
+<template>
+	<div class="boxs" @click="videoStop()">
+		<!-- 抖音视频页面 -->
+		<video class="myVideo" src="https://lizhiduo.oss-cn-shenzhen.aliyuncs.com/upgradeApp_package/newusers_course/newusers_course-20190925.mp4"
+		 controls="nocontrols" auto-play="true" @start="onstart" @pause="onpause" @finish="onfinish" @fail="onfail"
+		 :play-status="state.isplay" ></video>
+		 <div class="no-play" v-if="isshow" @click="videoStop()">
+			 <image class="bofang" src="/static/index/bofang1.png" mode="widthFix"></image>
+		 </div>
+	</div>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				info: [],
+				url: "",
+				videoContext: "",
+				state: {
+					isplay:'play'
+				},
+				isshow:false,
+			}
+		},
+		methods: {
+			onstart(event) {
+				
+			},
+			onpause(event) {
+				
+			},
+			onfinish(event) {
+				
+			},
+			onfail(event) {
+				
+			},
+			// 暂停当前
+			videoStop(state) {
+				console.log(1)
+				if (!this.isshow) {
+					this.state.isplay='pause';
+					this.isshow=true
+				} else {
+					this.state.isplay='play';
+					this.isshow=false
+				}
+			},
+		}
+	}
+</script>
+
+<style>
+	.myVideo {
+		width: 750upx;
+		flex: 1;
+	}
+
+	.boxs {
+		background-color: #000000;
+		flex: 1;
+		width: 750upx;
+	}
+	.no-play{
+		position: fixed;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		right: 0;
+			justify-content: center;
+			align-items: center;
+	}
+	.bofang{
+		width: 100upx;
+		height: 100upx;
+	}
+</style>

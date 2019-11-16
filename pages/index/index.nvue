@@ -1,0 +1,1442 @@
+<template>
+	<div class="content">
+		<div class="page-header">
+			<!-- 状态栏占位 -->
+			<div :style="{ height: statusBarHeight }"></div>
+			<div class="page-header-wrapper" @click="toSearch">
+				<div class="page-header-center">
+					<text class="flicon fangda">&#xe678;</text>
+					<text class="search-input">输入关键字搜索</text>
+				</div>
+				<div class="page-header-right">
+					<text class="flicon xiaoxi">&#xe6c4;</text>
+				</div>
+			</div>
+		</div>
+
+		<uni-tab-bar :drag="true" :tab-bars="tabBars" :tab-index="tabIndex" @tabChange="changeTab"></uni-tab-bar>
+
+		<slider class="slider" :index="tabIndex" :infinite="false" @change="changeTab">
+			<div class="slider-item" v-for="(tab,index1) in tabBars" :key="index1">
+
+				<list class="tui-list" @loadmore="loadMore(index1)" loadmoreoffset="5" @scroll="recylerScroll">
+
+
+					<refresh class="tui-refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="tab.refreshing? 'show' : 'hide'">
+						<loading-indicator class="tui-loading"></loading-indicator>
+						<text :class="[iosRefresh?'ios-arrow':'']" v-if="isIos">{{arrow}}</text>
+						<text class="refresh-text">{{tab.refreshText}}</text>
+					</refresh>
+					<cell>
+						<div :ref="'totop'+index1"></div>
+					</cell>
+					<cell v-if="index1==0">
+						<div class="tui-slider-box">
+							<slider class="tui-slider" interval="5000" auto-play="true" show-indicators="true">
+								<div @click="toSwiper(items.page)" class="tui-frame" :key="indexs" v-for="(items,indexs) in swiperList">
+									<image class="tui-slider-img" :class="[isIos?'':'tui-img-radius']" resize="cover" :src="items.url"></image>
+								</div>
+								<indicator class="tui-indicator"></indicator>
+							</slider>
+
+							<div class="function-bar">
+								<div class="function-item" v-for="(itembar,indexbar) in functionList" :key="indexbar" @click="funbarClick(indexbar)">
+									<image class="func-img" :src="itembar.imgurl" mode="widthFix"></image>
+									<text class="desc">{{itembar.desc}}</text>
+								</div>
+							</div>
+
+							<image v-if="kzshow&&kzshow.first_on_off==1" @click="tokz" class="kzimg" src="" mode="widthFix"></image>
+
+							<div class="headlines">
+								<image src="/static/index/head_logo.jpg" class="headlines-img" mode="widthFix"></image>
+								<slider class="head-slider" interval="3000" auto-play="true">
+									<div :key="indexh" class="head-slider-item" v-for="(itemh,indexh) in head_info">
+										<text @click="openWeb(itemh.url)" class="head-slider-item-w">{{itemh.name}}</text>
+									</div>
+								</slider>
+							</div>
+
+							<div class="new-people">
+								<image src="/static/index/xr_bg.png" class="bg-img" mode="widthFix"></image>
+								<div @click="toNewZero" class="people-left">
+									<text class="xinren-title">新人0元首单</text>
+									<text class="xinren-tips">新人专享免费购</text>
+									<image class="head-img" src="/static/index/new-zero/head_img.jpg" mode=""></image>
+								</div>
+								<div class="people-right"><text class="xinren-title">暂请期待</text>
+								<image class="head-img" src="/static/index/new-zero/head_img.jpg" mode=""></image>
+								</div>
+							</div>
+
+							<div class="today-hot">
+								<div class="today-hot-title">
+									<text class="flicon">&#xe62e;</text>
+									<text class="title">今日热卖</text>
+								</div>
+								<scroller class="scroller" scroll-direction="horizontal">
+									<div @click="navToDetail(item.itemid)" class="hot-shop-item" v-for="(item,index) in hotShop" :key="index">
+										<image class="hot-shop-pict" mode="widthFix" :src="item.itempic"></image>
+
+
+										<text class="hot-shop-title">{{item.itemshorttitle}}</text>
+
+
+										<div class="hot-shop-price">
+											<text class="hot-shop-price-num">￥{{item.itemendprice}}</text>
+											<div class="hot-quan">
+												<!-- <image src="/static/index/quanzi.png" mode="" class="hot-quan-img">
+													</image> -->
+												<text class="hot-quan-price"> 券{{Math.floor(item.couponmoney)}}</text>
+											</div>
+
+										</div>
+										<div class="hot-sold">
+											<text class="hot-sold-num">已售{{yishou(item.itemsale)}}件</text>
+										</div>
+
+									</div>
+								</scroller>
+							</div>
+
+							<!-- 好券直播 -->
+							<div class="block">
+								<text class="flicon">&#xe600;</text>
+								<text class="title">领券直播</text>
+							</div>
+						</div>
+					</cell>
+
+					<cell v-for="(item,index) in  tab.orderList" :key="index">
+
+						<!-- 商品列表组件-->
+						<!-- 商品列表 -->
+						<div class="shop-list" @click="navToDetail(item.item_id)">
+							<!-- 图片 -->
+							<div class="shop-pictrue">
+								<image lazy-load="true" class="big-pict" mode="widthFix" :src="'https:'+item.pict_url+'_300x300.jpg'"></image>
+							</div>
+							<!-- 右侧内容 -->
+							<div class="shop-content">
+								<!-- 标题 -->
+								<div class="shop-title">
+									<image lazy-load="true" class="shop-icn" :src="item.user_type==0?'/static/index/icon_tb.png':'/static/index/icon_tm_s.png'"
+									 mode="aspectFit"></image>
+									<text class="til">{{item.title}}</text>
+								</div>
+
+								<!-- 赚 -->
+								<div class="earn">
+									<text v-if="userlevel.on_off" class="primary">奖: {{((item.zk_final_price - item.coupon_amount)* item.commission_rate *0.01*userlevel.level_percent).toFixed(2)}}</text>
+								</div>
+
+								<!-- 价格 -->
+								<div class="shop-price">
+									<text class="ago-price">原价:￥{{item.zk_final_price}}</text>
+									<div class="quan">
+										<image src="/static/index/quanzi.png" mode="" class="quan-img">
+										</image>
+										<text class="quan-price"> ￥{{item.coupon_amount}}</text>
+									</div>
+
+								</div>
+
+								<!-- 券 -->
+								<div class="progress-box">
+									<div class="box-left">
+										<text class="price-icon">￥</text>
+										<text class="now-price">{{accSubtr(+item.zk_final_price,+item.coupon_amount)}}</text>
+									</div>
+									<text class="sold-num">已售{{yishou(item.volume)}}件</text>
+								</div>
+							</div>
+						</div>
+					</cell>
+
+					<!-- 加载组件 -->
+					<cell class="tui-loadmore">
+						<text class="loadmore-line" v-if="!tab.loadingType"></text>
+						<text class="loadmore-text tui-gray">{{tab.loadingText}}</text>
+					</cell>
+				</list>
+				<div class="fixedItem" @click="scrollToTop" v-if="tab.topShow">
+					<text class="flicon">&#xe6fe;</text>
+				</div>
+			</div>
+		</slider>
+	</div>
+</template>
+
+<script>
+	import uniTabBar from '@/components/tab-nvue/tabbar-i.nvue'
+	const dom = weex.requireModule('dom')
+	const animation = weex.requireModule('animation')
+
+	export default {
+		components: {
+			uniTabBar
+		},
+		data() {
+			return {
+				arr: ['内容一', '内容二'],
+				translateY: null,
+				statusBarHeight: '0wx', //状态栏占位高度
+				// 功能栏
+				functionList: [{
+						url: "/pages/index/funcbar/nine-nine",
+						desc: "9.9包邮",
+						imgurl: "/static/icons/9.9.jpg",
+					},
+					{
+						url: "/pages/index/funcbar/juhuasuan",
+						desc: "聚划算",
+						imgurl: "/static/icons/jhs.jpg",
+					},
+					{
+						url: "/pages/index/funcbar/douyin",
+						desc: "抖音好货",
+						imgurl: "/static/icons/dy.jpg",
+					},
+					{
+						url: "/pages/index/funcbar/tmcs",
+						desc: "天猫超市",
+						imgurl: "/static/icons/tm.jpg",
+					},
+					{
+						url: "/pages/category/category",
+						desc: "分类",
+						imgurl: "/static/icons/fl.jpg",
+					},
+					{
+						url: "/pages/index/funcbar/taoqianggou",
+						desc: "淘抢购",
+						imgurl: "/static/icons/tqg.jpg",
+					},
+
+					{
+						url: "/pages/index/funcbar/pdd",
+						desc: "拼多多",
+						imgurl: "/static/icons/pdd.jpg",
+					},
+					{
+						url: "/pages/index/funcbar/jd",
+						desc: "京东",
+						imgurl: "/static/icons/jd.jpg",
+					},
+					{
+						url: "/pages/index/funcbar/highyongjin",
+						desc: "高佣金",
+						imgurl: "/static/icons/gyj.jpg",
+					},
+					{
+						url: "/pages/index/funcbar/tblist",
+						desc: "淘宝榜单",
+						imgurl: "/static/icons/bd.jpg",
+					}
+
+				],
+				swiperList: [{
+						id: 0,
+						type: 'image',
+						url: '/static/index/jc.jpg',
+						page: '/pages/index/swiper/jc'
+					},
+					{
+						id: 0,
+						type: 'image',
+						url: '/static/index/9.9.jpeg',
+						page: '/pages/index/funcbar/nine-nine'
+					},
+					{
+						id: 0,
+						type: 'image',
+						url: '/static/index/ph.jpeg',
+						page: '/pages/index/funcbar/tblist'
+					}
+				],
+				head_info: [],
+				arrow: "",
+				iosRefresh: false,
+				refreshText: "下拉可以刷新",
+				tabIndex: 0, //当前的tab栏的索引
+				tabBars: [{
+						val: "3756",
+						desc: "综合",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					},
+					{
+						val: "3765",
+						desc: "内衣",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					},
+					{
+						val: "3767",
+						desc: "女装",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					},
+					{
+						val: "3763",
+						desc: "美妆",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					},
+					{
+						val: "3764",
+						desc: "男装",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					},
+					{
+						val: "3760",
+						desc: "母婴",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					},
+					{
+						val: "3762",
+						desc: "鞋包",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						isquest: true,
+					}
+				],
+				pageSize: 12,
+				hotShop: [], //热卖商品
+				userlevel: {}, //用户等级信息
+				timeId: '',
+				topShow: false,
+
+				kzshow: {},
+				downloadTask: '',
+				packgePath: ''
+			}
+		},
+
+		beforeCreate() {
+			const domModule = weex.requireModule('dom')
+			domModule.addRule('fontFace', {
+				'fontFamily': "flicon",
+				'src': "url('https://at.alicdn.com/t/font_1357595_hs9831moi1o.ttf')",
+			});
+		},
+
+		//进入页面请求数据
+		created() {
+			this.checkGuide();
+			this.userlevel = uni.getStorageSync("lzd-level")
+			// console.log(this.userlevel)
+			var pages = getCurrentPages();
+			var page = pages[pages.length - 1];
+			var currentWebview = page.$getAppWebview();
+			var _that = this;
+			currentWebview.addEventListener('show', function(e) {
+				_that.userlevel = uni.getStorageSync("lzd-level")
+				console.log("监听")
+			});
+			//获取状态栏高度给顶部占位节点
+			uni.getSystemInfo({
+				success: res => {
+					this.statusBarHeight = res.statusBarHeight + 'wx';
+				}
+			})
+			this.getHeadInfo();
+			this.getHot();
+			this.loadData();
+
+
+			// // #ifdef APP-PLUS
+			plus.screen.lockOrientation('portrait-primary') //竖屏正方向锁定
+
+			// 检查更新，参数：{ 当前版本号，跳转到更新页面的url }
+			if (plus.os.name.toLowerCase() == 'ios') {
+				plus.runtime.getProperty(plus.runtime.appid, (widgetInfo) => {
+					var vcode = widgetInfo.version.replace(/\./g, '')
+					uni.request({
+						url: `http://39.100.111.131:8088/UserCenter/Setting/VersionUpgrade/Ios?version_num=${vcode}&device_type=${plus.os.name.toLowerCase()}`,
+						success: (res) => {
+							let {
+								code,
+								data
+							} = res.data;
+							if (code == 2000) {
+								if (data.app_url) {
+									this.createTask(data.app_url)
+								}
+
+							}
+						}
+					})
+				})
+			} else {
+				plus.runtime.getProperty(plus.runtime.appid, (widgetInfo) => {
+					var vcode = widgetInfo.version.replace(/\./g, '')
+					uni.request({
+						url: `http://39.100.111.131:8088/UserCenter/Setting/VersionUpgrade/Android?version_num=${vcode}&device_type=${plus.os.name.toLowerCase()}`,
+						success: (res) => {
+							let {
+								code,
+								data
+							} = res.data;
+							if (code == 2000) {
+								if (data.app_url) {
+									this.createTask(data.app_url)
+								}
+
+							}
+						}
+					})
+				})
+			}
+
+			// #endif
+		},
+		beforeDestroy() {
+			
+		},
+		methods: {
+			getHeadInfo(){
+				uni.request({
+					url:'http://zhou.lizhiduo.cn/Headlines',
+					success:res=>{
+						let{code,data}=res.data;
+						if(code==200){
+							this.head_info=data
+						}
+					}
+				})
+			},
+			toNewZero(){
+				uni.navigateTo({
+					url:'/pages/index/newborn/new-zero/new-zero'
+				})
+			},
+			checkGuide() {
+				// 思路： 检测是否有启动缓存，如果没有，就是第一次启动，第一次启动就去 启动介绍页面
+				const launchFlag = uni.getStorageSync('lzd-flag');
+				console.log(launchFlag)
+				if (launchFlag) {
+					uni.switchTab({
+						url: '/pages/index/index'
+					});
+				} else {
+					uni.navigateTo({
+						url: '/pages/guide/guide'
+					});
+				}
+			},
+			// 关闭下载任务
+			closeTask() {
+				this.downloadTask.abort()
+				this.downloadTask = null
+
+			},
+			installPackge() {
+				plus.runtime.install(this.packgePath, {
+					force: true
+				}, function() {
+					plus.runtime.restart()
+				})
+			},
+			createTask(downloadLink) {
+				//判断是否已经存在任务
+				if (this.packgePath) {
+					this.installPackge()
+				} else {
+					// 创建下载任务对象
+					this.downloadTask = uni.downloadFile({
+						url: downloadLink,
+						success: (res) => {
+							if (res.statusCode === 200) {
+								// 保存下载的安装包
+								uni.saveFile({
+									tempFilePath: res.tempFilePath,
+									success: (res) => {
+										this.packgePath = res.savedFilePath
+										// 进行安装
+										this.installPackge()
+										// 任务完成，关闭下载任务
+										this.closeTask()
+									}
+								})
+							}
+						}
+					})
+				}
+			},
+			openWeb(url){
+				uni.navigateTo({
+					url:`/pages/index/kzweb?url=${url}`
+				})
+			},
+			toSwiper(url) {
+				uni.navigateTo({
+					url,
+					complete: () => {
+
+					}
+				})
+			},
+			scrollToTop: function() {
+				const el = this.$refs['totop' + this.tabIndex][0]
+				console.log(el)
+				dom.scrollToElement(el, {
+					offset: -126
+				})
+			},
+			recylerScroll: function(e) {
+				if (e.contentOffset.y < -200) {
+					this.$set(this.tabBars[this.tabIndex], 'topShow', true)
+				} else {
+					this.$set(this.tabBars[this.tabIndex], 'topShow', false)
+				}
+			},
+
+			//修改已售的显示
+			yishou(data) {
+				if (data >= 10000) {
+					return (data / 10000).toFixed(1) + '万'
+				} else {
+					return data
+				}
+			},
+			//获取每日热卖的数据
+			getHot() {
+				console.log('请求热卖')
+				uni.request({
+					url: 'http://39.100.111.131:8080/get_deserve_item',
+					success: (res) => {
+						let {
+							code,
+							item_info
+						} = res.data;
+
+						if (code == 1) {
+							this.hotShop = item_info;
+						}
+					}
+				})
+			},
+			//解决js加减不精确问题
+			accSubtr(arg1, arg2) {
+				var r1, r2, m, n;
+				try {
+					r1 = arg1.toString().split(".")[1].length
+				} catch (e) {
+					r1 = 0
+				}
+				try {
+					r2 = arg2.toString().split(".")[1].length
+				} catch (e) {
+					r2 = 0
+				}
+				m = Math.pow(10, Math.max(r1, r2));
+				//动态控制精度长度
+				n = (r1 >= r2) ? r1 : r2;
+				return ((arg1 * m - arg2 * m) / m).toFixed(n);
+			},
+			//功能栏点击事件
+			funbarClick(index) {
+
+				var funcItem = this.functionList[index];
+				if (!funcItem.url) {
+					uni.showToast({
+						title: '功能正在更新中',
+						icon: 'none'
+					})
+					return
+				}
+				uni.navigateTo({
+					url: funcItem.url,
+					success: res => {},
+				});
+			},
+
+			//跳转搜索页面
+			toSearch() {
+				uni.navigateTo({
+					url: '/pages/index/HM-search',
+					success: res => {},
+					fail: () => {},
+					complete: () => {}
+				});
+			},
+
+			//加载数据
+			loadData(source) {
+				//获取当前轮播图得索引
+				let index = this.tabIndex;
+				//获取当前轮播面板对象
+				let navItem = this.tabBars[index];
+
+				//如果上一次请求失败,请求数据加 1；
+
+				if (!navItem.isquest) {
+					this.pageSize++;
+					console.log(this.pageSize)
+				}
+				//如果是刷新则重置初始值
+				if (source == "refresh") {
+					navItem.loadingType = true;
+					navItem.loaded = false;
+					navItem.pageNo = 1;
+				}
+				//检测没有数据
+				if (!navItem.loadingType) {
+					return;
+				}
+				//今日热卖刷新
+				if (this.tabIndex == 0 && source == "refresh") {
+					this.getHot()
+				}
+				//检测是否是第一次加载，防止重复加载数据
+				if (source == "tabChange" && navItem.loaded == true) {
+					return
+				}
+				console.log(navItem.val, this.pageSize, navItem.pageNo)
+				uni.request({
+					url: 'http://39.100.111.131:8080/getgood',
+					data: {
+						channel: navItem.val,
+						pagesize: this.pageSize,
+						pageno: navItem.pageNo
+					},
+					success: res => {
+						let {
+							code,
+							data
+						} = res.data;
+						//如果上一次请求失败,请求数据加 1；
+						if (!navItem.isquest) {
+							navItem.isquest = true;
+							this.pageSize--;
+							console.log(this.pageSize)
+						}
+						//请求成功对应序号加一
+						navItem.pageNo++;
+						//结束下拉
+						if (source == "refresh" && navItem.orderList.length >= 24) {
+							navItem.orderList = [];
+						}
+						//请求成功
+						if (code == 200) {
+							let shopList = data;
+							// 添加新增数据		
+							navItem.orderList = navItem.orderList.concat(shopList);
+							//请求成功序号增加,并且修改对应得加载状态
+							navItem.loaded = true;
+							//判断是否还有数据
+							navItem.loadingType = shopList.length ==this.pageSize ? 'true' : "false";
+						}
+					},
+					fail: () => {
+						//请求失败，加入false标志
+						navItem.isquest = false;
+						//请求失败的情况下更改请求的次数
+						navItem.loadingText = '没有更多了';
+					},
+					complete: () => {
+						navItem.refreshing = false;
+					}
+				})
+			},
+
+			//商品详情页面
+			navToDetail(id) {
+				uni.navigateTo({
+					url: "/pages/index/shopdetails?id=" + id
+				})
+			},
+			//上拉加载更多
+			loadMore(e) {
+				console.log("触发")
+
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabIndex];
+				if (!currentTab.loadingType) {
+					currentTab.loadingText = '没有更多了';
+					return
+				}
+				currentTab.loadingText = "正在加载...";
+				this.loadData();
+			},
+			async changeTab(e) {
+				
+				this.tabIndex = e.index;
+				//如果是第一页的话就请求数据，因为轮播和组件都会触发，所以加入状态判断
+				if (this.tabBars[this.tabIndex].pageNo === 1&& this.tabBars[this.tabIndex].loaded == false) {
+					
+					//请求成功序号增加,并且修改对应得加载状态
+					this.tabBars[this.tabIndex].loaded = true;
+					this.loadData();
+				}
+			},
+
+			//手指离开，下拉刷新触发修改状态
+			onrefresh(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabIndex];
+				this.iosRefresh = false;
+				currentTab.arrow = "↑";
+				currentTab.refreshText = "正在刷新...";
+				currentTab.refreshing = true;
+				this.loadData("refresh");
+
+			},
+
+			//手指接触屏幕开始，下拉触发
+			onpullingdown(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabIndex];
+
+				//如果为刷新中则不准再次触发刷新
+				if (currentTab.refreshing) {
+					return;
+				}
+				this.iosRefresh = this.isIos
+
+				if (Math.abs(event.pullingDistance) > Math.abs(event.viewHeight)) {
+					this.arrow = "↑";
+					currentTab.refreshText = "释放立即刷新";
+				} else {
+					this.arrow = "↓";
+					currentTab.refreshText = "下拉可以刷新";
+				}
+			},
+
+			loadExecution() {
+				try {
+					uni.removeStorage({
+						key: 'lzd-flag',
+						success: function(res) {
+							console.log('success');
+						}
+					});
+					const value = uni.getStorageSync('lzd-flag');
+					console.log(value)
+					if (value) {
+						uni.switchTab({
+							url: '/pages/index/index'
+						});
+					} else {
+						uni.setStorage({
+							key: 'lzd-flag',
+							data: true,
+							success: function() {}
+						});
+						uni.redirectTo({
+							url: '/pages/index/guide'
+						});
+					}
+				} catch (e) {
+					// error 
+					uni.setStorage({
+						key: 'lzd-flag',
+						data: true,
+						success: function() {
+							console.log('error时存储launchFlag');
+						}
+					});
+					uni.redirectTo({
+						url: '/pages/index/guide'
+					});
+				}
+				return;
+			},
+
+			//跳转到扩展网页
+			tokz() {
+				uni.navigateTo({
+					url: `/pages/index/kzindex?img=${this.kzshow.first_url}`
+				});
+			}
+		}
+	}
+</script>
+
+<style>
+	.head-img{
+		position: absolute;
+		width: 100rpx;
+		height: 100rpx;
+		bottom: 20rpx;
+		right: 20rpx;
+	}
+	
+	.xinren-title{
+		font-size: 30rpx;
+	}
+	.xinren-tips{
+		color: #949494;
+		font-size: 20rpx;
+	}
+	.slider{
+		flex: 1;
+		background-color: #f8f8f8;
+	}
+	.slider-item {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 750upx;
+	}
+
+	.fixedItem {
+		width: 66rpx;
+		height: 66rpx;
+		background-color: #FFFFFF;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		position: absolute;
+		bottom: 50upx;
+		right: 30upx;
+		z-index: 999999;
+		box-shadow: 0 0 20px #ccc;
+	}
+
+	.headlines {
+		margin: 14rpx 0 4rpx;
+		width: 710rpx;
+		padding: 14rpx 30rpx;
+		flex-direction: row;
+		height: 70rpx;
+		background-color: #FEFEFE;
+		border-radius: 10rpx;
+		align-items: center;
+	}
+
+	.headlines-img {
+		width: 150rpx;
+		height: 36rpx;
+		margin-right: 20rpx;
+	}
+
+	.head-slider {
+		flex: 1;
+		height: 36rpx;
+	}
+
+	.head-slider-item {
+		height: 36rpx;
+
+	}
+
+	.head-slider-item-w {
+		
+		font-size: 28rpx;
+		lines: 1;
+		text-overflow: ellipsis;
+	}
+
+	.new-people {
+		margin: 10rpx 20rpx;
+		width: 710rpx;
+		height: 286rpx;
+		position: relative;
+		flex-direction: row;
+		border-radius: 10rpx;
+		overflow: hidden;
+		justify-content: space-between;
+		padding: 0 20rpx;
+	}
+
+	.bg-img {
+		border-radius: 10rpx;
+		width: 710rpx;
+		height: 286rpx;
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	.people-left {
+		position: relative;
+		margin-top: 90rpx;
+		width: 326rpx;
+		height: 180rpx;
+		border-radius: 10rpx;
+		background-color: #FFFFFF;
+		padding: 20rpx;
+	}
+
+	.people-right {
+		position: relative;
+		padding: 20rpx;
+		margin-top: 90rpx;
+		width: 326rpx;
+		height: 180rpx;
+		border-radius: 10rpx;
+		background-color: #FFFFFF;
+	}
+
+	.today-hot {
+		background-color: #FFFFFF;
+		margin: 10upx 0;
+	}
+
+	.today-hot-title {
+		flex-direction: row;
+		align-items: center;
+		padding: 10upx 20upx 0;
+	}
+
+	/* 今日热卖 */
+	.scroller {
+		width: 750upx;
+		flex-direction: row;
+		padding: 20upx;
+	}
+
+	.hot-shop-item {
+		width: 230upx;
+		margin: 0 10upx;
+		/* padding: 20upx; */
+	}
+
+	.hot-shop-pict {
+		width: 230upx;
+		height: 230upx;
+		border-radius: 10upx;
+		margin-bottom: 10upx;
+	}
+
+	.hot-shop-title {
+		text-overflow: ellipsis;
+		lines: 1;
+		font-size: 24upx;
+		color: #464646;
+	}
+
+	.hot-shop-price {
+		align-items: center;
+		flex-direction: row;
+		position: relative;
+		margin: 10upx 0;
+		justify-content: space-between;
+	}
+
+	.hot-shop-price-num {
+		color: #f51515;
+	}
+
+	.hot-quan {
+		flex-direction: row;
+		height: 25upx;
+		align-items: center;
+		font-size: 20upx;
+
+		position: relative;
+		margin-right: 40upx;
+	}
+
+	.hot-quan-img {
+		position: absolute;
+		left: -1upx;
+		width: 24upx;
+		height: 24upx;
+	}
+
+	.hot-quan-price {
+		font-size: 20upx;
+		margin-left: 20upx;
+		padding: 0 4upx;
+		color: #FFFFFF;
+		border-radius: 4upx;
+		background-color: #fd3e14;
+	}
+
+	.hot-sold {
+		flex-direction: row;
+	}
+
+	.hot-sold-num {
+		font-size: 20upx;
+		color: #848484;
+		;
+	}
+
+
+	/* 好券 */
+	.flicon {
+		font-family: flicon;
+		font-size: 36upx;
+		color: #e74b45;
+	}
+
+	.content {
+		background-color: #f8f8f8;
+		position: relative;
+	}
+
+	.bug {
+		height: 1upx;
+		width: 750upx;
+	}
+
+	/* 商品列表 */
+	.shop-list {
+		width: 710upx;
+		margin: 0upx 20upx 20upx;
+		height: 250upx;
+		background-color: #fff;
+		border-radius: 10upx;
+		flex-direction: row;
+	}
+
+	.shop-pictrue {
+		width: 250upx;
+		margin-right: 10upx;
+	}
+
+	.big-pict {
+		width: 250upx;
+		height: 250upx;
+		border-radius: 10upx;
+		overflow: hidden;
+	}
+
+	.shop-content {
+		padding: 10upx;
+		flex: 1;
+		position: relative;
+	}
+
+	.shop-title {
+		flex-direction: row;
+	}
+
+	.shop-icn {
+		margin-right: 10upx;
+		width: 50upx;
+		height: 30upx;
+	}
+
+	.til {
+		flex: 1;
+		font-size: 28upx;
+		/* overflow: hidden; */
+		text-overflow: ellipsis;
+		lines: 1;
+	}
+
+	.earn {
+		margin-top: 18upx;
+		flex-direction: row;
+	}
+
+	.primary {
+		border-color: #ea3424;
+		border-style: solid;
+		border-width: 1upx;
+		font-size: 24upx;
+		color: #ea3424;
+		margin: 10upx 0;
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+		background-color: #fdf6f2;
+	}
+
+	.middle {
+		background-color: #fcf0f0;
+		font-size: 24upx;
+		color: #ed7236;
+		margin: 10upx;
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+	}
+
+	.shop-price {
+		align-items: flex-end;
+		flex-direction: row;
+		position: relative;
+		margin-top: 15upx;
+		justify-content: space-between;
+	}
+
+
+
+	.now-price {
+		/* font-weight: bold; */
+		font-size: 50upx;
+		padding-right: 10upx;
+		color: #fb6b73;
+	}
+
+	.ago-price {
+		text-decoration: line-through;
+		/* position: absolute;
+		left: 160upx; */
+		color: #969696;
+		font-size: 24upx;
+	}
+
+	.progress-box {
+		margin-top: 15upx;
+		align-items: center;
+		position: relative;
+		color: #969696;
+		flex-direction: row;
+		justify-content: space-between;
+		margin-bottom: 10upx;
+	}
+
+	.box-left {
+		flex-direction: row;
+		align-items: flex-end;
+	}
+
+	.price-icon {
+		font-size: 30upx;
+		color: #fb6b73;
+		padding-bottom: 6upx;
+	}
+
+	.quan {
+		flex-direction: row;
+		height: 31upx;
+		align-items: center;
+		font-size: 20upx;
+		border-style: solid;
+		border-color: #f51515;
+		border-width: 1upx;
+		position: relative;
+		margin-right: 40upx;
+	}
+
+	.quan-img {
+		position: absolute;
+		left: -1upx;
+		width: 30upx;
+		height: 30upx;
+	}
+
+	.quan-price {
+		font-size: 26upx;
+		margin-left: 20upx;
+		padding: 0 6upx;
+		color: #f51515;
+	}
+
+	.sold-num {
+		color: #969696;
+		font-size: 24upx;
+		margin-right: 40upx;
+	}
+
+	/* 功能栏 */
+	.function-bar {
+		flex-direction: row;
+		flex-wrap: wrap;
+		padding-top: 20upx;
+		background-color: #FFFFFF;
+	}
+
+	.function-item {
+		width: 149upx;
+		height: 150upx;
+		flex-direction: column;
+		align-items: center;
+		color: #757575;
+		margin-bottom: 10upx;
+	}
+
+	.func-img {
+		width: 80upx;
+		height: 80upx;
+	}
+
+	.desc {
+		font-size: 24upx;
+		margin-top: 20upx;
+		color: #464646;
+	}
+
+
+	/* 每一个块级标题的样式 */
+	.block {
+		width: 750upx;
+		background-color: #fff;
+		flex-direction: row;
+		align-items: center;
+		padding: 10upx 20upx;
+		margin-bottom: 10upx;
+	}
+
+	.title {
+		width: 260upx;
+		padding: 10upx 10px;
+		font-size: 34upx;
+		color: #e74b45;
+		font-weight: 500;
+	}
+
+	.save-num {
+		font-size: 22upx;
+		margin-right: 20upx;
+	}
+
+
+	/* 顶部标题栏 */
+	.page-header {
+		background-color: #ec706b;
+	}
+
+	.page-header-wrapper {
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		height: 100px;
+		padding: 0px 20px;
+	}
+
+	.shop-content {
+		padding: 10upx;
+		flex: 1;
+	}
+
+	.page-header-left {
+		opacity: 0.9;
+	}
+
+	.logo {
+		font-size: 40px;
+		color: #fff;
+	}
+
+	.page-header-center {
+		flex: 1;
+		padding: 0px 30px 0 20px;
+		flex-direction: row;
+		height: 60px;
+		align-items: center;
+		color: #fff;
+		background-color: rgba(255, 255, 255, .2);
+		border-radius: 100px;
+	}
+
+	.fangda {
+		font-size: 35upx;
+		color: #FFFFFF;
+		margin-right: 10upx;
+	}
+
+	.search-input {
+		font-size: 28px;
+		color: #fff;
+
+	}
+
+	.xiaoxi {
+		color: #FFFFFF;
+		font-size: 50upx;
+	}
+
+	.page-header-right {
+		width: 80px;
+		align-items: center;
+	}
+
+	.tui-white {
+		padding: 0 24upx;
+		background-color: #FFFFFF !important;
+		margin-bottom: 10upx;
+	}
+
+	.category-btn {
+		color: #F43F3B;
+	}
+
+	.tui-gray {
+		background-color: #fafafa;
+	}
+
+	.tui-slider-box {
+		width: 750upx;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.tui-slider {
+		width: 690upx;
+		height: 300upx;
+		border-radius: 12upx;
+		overflow: hidden;
+	}
+
+	.tui-img-radius {
+		border-radius: 12upx;
+	}
+
+	.tui-frame {
+		width: 690upx;
+		height: 300upx;
+		background-color: #fff;
+	}
+
+	.tui-slider-img {
+		width: 690upx;
+		height: 300upx;
+	}
+
+	.tui-indicator {
+		width: 690px;
+		height: 20px;
+		item-color: rgba(255, 255, 255, 0.4);
+		item-selected-color: #FFFFFF;
+		item-size: 14px;
+		position: absolute;
+		bottom: 24px;
+		left: 0;
+	}
+
+	.tui-loading {
+		margin-right: 15px;
+		height: 60px;
+		width: 60px;
+		color: #999999;
+	}
+
+	.tui-list {
+		position: relative;
+		/* padding: 20upx; */
+	}
+
+
+	.tab-bar-item {
+		height: 80px;
+		width: 100px;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-size: 30upx;
+		/* margin: 0 20upx; */
+	}
+
+	.category-btn {
+		height: 80px;
+		color: #f00;
+		font-size: 28upx;
+		width: 60upx;
+		flex-direction: row;
+		line-height: 80upx;
+		justify-content: center;
+	}
+
+	.tab-bar-title {
+		height: 80px;
+		line-height: 80px;
+		font-size: 32px;
+		color: #999;
+		font-weight: 400;
+	}
+
+	.tui-active {
+		color: #FF0000;
+		/* font-size: 36px; */
+		font-weight: bold;
+		border-bottom-width: 6px;
+		border-style: solid;
+		border-color: #FF0000;
+		/* 	width: 80px; */
+		text-align: center;
+	}
+
+	.tui-loadmore {
+		height: 100px;
+		width: 750px;
+		flex-direction: column;
+		justify-content: center;
+		position: relative;
+		align-items: center;
+	}
+
+	.loadmore-text {
+		font-size: 26px;
+		text-align: center;
+		color: #999999;
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+
+	.loadmore-line {
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		border-bottom-color: #e5e5e5;
+		width: 320px;
+		position: absolute;
+		z-index: -1;
+	}
+
+	.tui-refresh {
+		width: 750px;
+		height: 80px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.refresh-text {
+		text-align: center;
+		font-size: 26px;
+		color: #999999;
+	}
+
+	.ios-arrow {
+		color: #999999;
+		font-size: 42px;
+		font-weight: 300;
+		padding-right: 20px;
+		margin-left: -75px;
+	}
+
+	.kzimg {
+		width: 700upx;
+		height: 250upx;
+		padding: 16upx 24upx;
+	}
+</style>

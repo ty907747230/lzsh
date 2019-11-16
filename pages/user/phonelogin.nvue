@@ -1,0 +1,288 @@
+<template>
+	<div class="page">
+		<!-- <div class="header">
+			<image class="image" src="../../static/login/LoginHeader.png" mode="aspectFill"></image>
+		</div> -->
+		<div class="back-btn">
+			<text class="btnicon flicon" @click="backclick">&#xe622;</text>
+		</div>
+		<div class="title">
+			<text class="title-content">手机号登录</text>
+			<text class="title-tips">亲，欢迎登录荔枝生活</text>
+		</div>
+		<div class="input">
+			<text class="input-icon flicon">&#xe64f;</text>
+			<input @input="handleInput" class="input-content" autofocus="true" placeholder-class="input-place" placeholder-style="#949494"
+			 type="tel" maxlength="11" v-model="mobile" placeholder="请输入手机号码" />
+			<text @click="handleClear" v-if="mobile" class="input-exit flicon">&#xe615;</text>
+		</div>
+		<div @click="handleWait" class="login-btn" :class="[isreg?'login-btn-active':'']">
+			<text class="login-btn-content">获取验证码</text>
+		</div>
+	</div>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				isshow: false,
+				waitMsg: "获取验证码",
+				isable: true,
+				mobile: "",
+				regCode: "",
+				timeId: "", //定时器
+				isreg: false, //验证成功
+			};
+		},
+		created() {
+			this.text = getApp().globalData.text;
+		},
+		onUnload() {
+			if (this.timeId) {
+				clearInterval(this.timeId)
+			}
+		},
+		methods: {
+			backclick() {
+				uni.navigateBack({
+					delta: 1
+				})
+			},
+			//清空数据
+			handleClear() {
+				this.mobile = '';
+			},
+			//输入框输入事件
+			handleInput(e) {
+				this.mobile = e.value
+				if(e.value.length>11){
+					console.log(1)
+					this.mobile=e.value.substring(0,11)
+					console.log(this.mobile)
+				}
+				//判断手机号格式
+				var reg = /^1[0-9]{10}$/;
+				//正则匹配改变按钮颜色
+				if (reg.test(this.mobile)) {
+					this.isreg = true;
+				} else {
+					this.isreg = false;
+				}
+			},
+			handleWait() {
+				//正则不匹配
+				if (!this.isreg) {
+					return 
+				}
+				//把手机号放到本地
+				uni.setStorageSync("lzd-phone", this.mobile);
+				uni.showLoading({
+					mask:true,
+				});
+				//获取验证码
+				uni.request({
+					url:`http://39.100.111.131:8088/login/GetPhoneCode?phone=${this.mobile}&category=authentication`,
+					success:(res)=> {
+						let{code,msg}=res.data;
+						console.log(res)
+						if(code==2000){
+							uni.navigateTo({
+								url: '/pages/user/regcode',
+							});
+						}
+						else{
+							uni.showToast({
+								title:msg,
+								icon:'none'
+							})
+						}
+					},
+					fail:() =>{
+						uni.showToast({
+							title:'发送失败，请重新获取',
+							icon:'none'
+						})
+					},
+					complete() {
+						uni.hideLoading();
+					}
+				})
+				
+				
+			},
+			//手机登录
+			// 					login() {
+			// 						//验证手机号格式
+			// 						if (!this.mobile) {
+			// 
+			// 							uni.showToast({
+			// 								icon: 'none',
+			// 								title: '手机号不能为空',
+			// 								duration: 1000
+			// 							});
+			// 							return;
+			// 						}
+			// 						//判断手机号格式
+			// 						var reg = /^(((13[0-9]{1})|(15[0-9]{1})|(17[0-9]{1})|(18[0-9]{1}))+\d{8})$/;
+			// 						if (!reg.test(this.mobile)) {
+			// 							uni.showToast({
+			// 								title: '请输入正确的手机号',
+			// 								icon: 'none',
+			// 								duration: 1000
+			// 							});
+			// 							return;
+			// 						};
+			// 						if (!this.regCode) {
+			// 							uni.showToast({
+			// 								title: '请输入验证码',
+			// 								icon: 'none',
+			// 								duration: 1000
+			// 							});
+			// 							return;
+			// 						}
+			// 						//用户登录
+			// 						this.$api.useLogin(e.detail.value).then(res => {
+			// 							let {
+			// 								code,
+			// 								msg,
+			// 							} = res.data;
+			// 
+			// 							//登录成功获取token
+			// 							if (code == 2001 || code == 2000) {
+			// 
+			// 								//老用户
+			// 								if (code == 2000) {
+			// 									//获取到用户的唯一标识token，并保存到本地
+			// 									this.$store.commit("editUser", res.data.data);
+			// 									this.$msg(msg);
+			// 									//重定向
+			// 									uni.navigateBack({
+			// 										delta: 2
+			// 									});
+			// 
+			// 								}
+			// 								//新用户
+			// 								if (code == 2001) {
+			// 									//跳转邀请页面
+			// 									uni.navigateTo({
+			// 										url: '/pages/user/yqcode?identification=' + this.mobile,
+			// 										success: res => {},
+			// 										fail: () => {},
+			// 										complete: () => {}
+			// 									});
+			// 								}
+			// 							}
+			// 
+			// 						})
+			// 					}
+		},
+	}
+</script>
+
+<style>
+	.flicon {
+		font-family: flicon;
+	}
+	.page {
+		position: absolute;
+
+		bottom: 0;
+		top: 0;
+		width: 750upx;
+	}
+
+	.back-btn {
+		height: 200upx;
+		padding: 50upx;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.btnicon {
+		margin-top: 20upx;
+		font-size: 40upx;
+	}
+
+	.title {
+		height: 200upx;
+		padding: 40upx;
+		flex-direction: column;
+	}
+
+	.title-content {
+		font-size: 60upx;
+		color: #464646;
+		margin-bottom: 20upx;
+	}
+
+	.title-tips {
+		font-size: 30upx;
+		color: #848484;
+	}
+
+	.input {
+		width: 650upx;
+		margin: 50upx;
+		height: 100upx;
+		flex-direction: row;
+		align-items: center;
+		margin-bottom: 12px;
+		border-left-color: #0088fb;
+		justify-content: center;
+		background-color: #fff;
+		border-bottom-color: #FF0000;
+		border-style: solid;
+		border-bottom-width: 1upx;
+		/* padding-top: 10px;
+		padding-right: 10px;
+		padding-left: 30px; */
+		/* padding-bottom: 10px; */
+	}
+
+	.input-icon {
+		margin-right: 16upx;
+		font-size: 40upx;
+		/* width: 80upx; */
+	}
+
+	.input-content {
+		/* caret-color: #FF0000; */
+		background-color: #fff;
+		padding-left: 10px;
+		/* border-width: 1px; */
+		height: 80px;
+		font-size: 30px;
+		/* border-radius: 10px; */
+		width: 500upx;
+	}
+
+	.input-place {
+		font-size: 40upx;
+		color: #949494;
+	}
+
+	.input-exit {
+		width: 50upx;
+		font-size: 30upx;
+	}
+
+	.login-btn {
+		margin: 50upx 30upx 0;
+		height: 100upx;
+		border-radius: 100upx;
+		background-image: linear-gradient(to right, #f6c4a8, #f7c4a8);
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.login-btn-active {
+		background-image: linear-gradient(to right, #f88e29, #f7582c);
+	}
+
+	.login-btn-content {
+		color: #FFFFFF;
+		font-size: 40upx;
+	}
+</style>

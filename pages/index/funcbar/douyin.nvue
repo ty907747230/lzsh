@@ -1,0 +1,744 @@
+<template>
+	<div class="content">
+		<!-- uni 官方顶部选项卡组件 -->
+		<uni-tab-bar :drag="true" :tab-bars="tabBars" :tab-index="tabCurrentIndex" @tabChange="tabChange"></uni-tab-bar>
+		
+		<!-- slider就是uni swiper -->
+		<slider class="slider" :index="tabCurrentIndex" :infinite="false" @change="tabChange">
+		<div class="slider-item" v-for="(tab,index1) in tabBars" :key="index1">
+			
+			<seizeSeat type='empty' v-if="tab.orderList.length==0"></seizeSeat>
+			<waterfall @loadmore="loadMore(index1)" :ref="'tab'+index1" loadmoreoffset="5" class="tui-product-list"  @scroll="recylerScroll"
+			 column-count="2" column-gap="5"  right-gap="10" left-gap="10">
+				<!-- 刷新组件 -->
+				<refresh class="tui-refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="tab.refreshing ? 'show' : 'hide'">
+					<loading-indicator class="tui-loading"></loading-indicator>
+					<text :class="[iosRefresh?'ios-arrow':'']" v-if="isIos">{{arrow}}</text>
+					<text class="refresh-text">{{tab.refreshText}}</text>
+				</refresh>
+			<cell>
+				<div :ref="'totop'+index1"></div>
+			</cell>
+				<cell v-for="(item,index) in  tab.orderList" :key="index">
+					
+					<!-- 商品列表组件-->
+					<!-- 商品列表 -->
+					<div class="shop-list">
+						<div class="shop-img" @click="playVideo(tab,index)">
+							<!-- 上边图片 -->
+							<image class="shop-img" :src="item.itempic+'_310x310.jpg'" mode="widthFix">
+							</image>
+							<image class="bofang" src="/static/index/bofang1.png" mode="widthFix"></image>
+						</div>
+								
+						<!-- 下边商品详情 -->
+						<div class="shop-content"  @click="navToDetail(item.itemid)">
+							<!-- 标题 -->
+							<div class="shop-title">
+								<image  class="shop-icn" :src="item.user_type==0?'/static/index/icon_tb.png':'/static/index/icon_tm_s.png'"
+								 mode="aspectFill"></image>
+								<text class="til">{{"         "+item.itemtitle}}</text>
+							</div>
+			
+							<!-- 券 -->
+							<div class="progress-boxs">
+								<div class="quan">
+									<image src="/static/index/quanzi.png" mode="" class="quan-img">
+									</image>
+									<text class="quan-price"> ￥{{item.couponmoney}}</text>
+								</div>
+								<text class="yugu"  v-if="userlevel.on_off">奖:{{tofix(item.tkrates*userlevel.level_percent)}}</text>
+							</div>
+			
+							<!-- 价格 -->
+							<div class="shop-price">
+			
+								<text class="now-price">￥{{item.itemendprice}}</text>
+								<text class="ago-price">原价:{{item.itemprice}}</text>
+							</div>
+			
+							<div class="volume">
+								<text class="volume">已售{{yishou(item.itemsale)}}件</text>
+							</div>
+			
+						</div>
+					</div>
+				</cell>
+				<!-- 加载组件 -->
+				<cell class="tui-loadmore">
+					<text class="loadmore-line" v-if="!tab.loadingType"></text>
+					<text class="loadmore-text tui-gray">{{tab.loadingText}}</text> 
+				</cell>
+			</waterfall>
+			<div class="fixedItem" @click="scrollToTop" v-if="tab.topShow">
+				<text class="flicon">&#xe6fe;</text>
+			</div>
+		</div>
+		</slider>
+		
+	</div>
+</template>
+
+<script>
+	import seizeSeat from '@/components/seize-seat.nvue'
+	import uniTabBar from '@/components/tab-nvue/tabbar.nvue'
+	import mediaList from '@/components/tabNvue/mediaList.nvue'
+	
+const clipborad = weex.requireModule('clipboard');
+const dom = weex.requireModule('dom')
+	export default {
+		components: {
+			mediaList,
+			uniTabBar,
+			seizeSeat
+		},
+		data() {
+			return {
+				statusBarHeight: '0wx', //状态栏占位高度
+				// 功能栏
+				arrow: "",
+				iosRefresh: false,
+				refreshing: false, //刷新状态
+				refreshText: "下拉可以刷新",
+				tabCurrentIndex: 0, //当前的tab栏的索引
+				tabBars: [{
+						id: "热门",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 0,
+					},
+					{
+						id: "美妆达人",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 4,
+					},
+					{
+						id: "吃货专区",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 11,
+					}, 
+					{
+						id: "百变穿搭",
+						type: "day",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 1,
+					},
+					
+					
+					{
+						id: "魅力配饰",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 5,
+					},{
+						id: "萌娃驾到",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 8,
+					},  {
+						id: "居家好物",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 10,
+					}, 
+					{
+						id: "时尚潮男",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 2,
+					},
+					 {
+						id: "步履不停",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 6,
+					},{
+						id: "数码达人",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 12,
+					}, {
+						id: "用电能手",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 13,
+					}, {
+						id: "伴你前行",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 15,
+					},
+					{
+						id: "学习娱乐",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 16,
+					},
+					{
+						id: "萌宠世界",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 17,
+					},
+					
+					{
+						id: "宝妈神器",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 9,
+					},
+					{
+						id: "其他",
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 14,
+					}
+				],
+				pageSize: 12,
+				userlevel:{}, //用户等级信息
+				videolist:{} //视频地址列表
+			}
+		},
+
+		//进入页面请求数据
+		created() {
+			console.log("渲染页面")
+			//获取状态栏高度给顶部占位节点
+			uni.getSystemInfo({
+				success: res => {
+					this.statusBarHeight = res.statusBarHeight + 'wx';
+				}
+			})
+			this.loadData();
+			this.userlevel=uni.getStorageSync("lzd-level")
+			var pages = getCurrentPages();
+			var page = pages[pages.length - 1];
+			var currentWebview = page.$getAppWebview();
+			var _that=this;
+			currentWebview.addEventListener('show', function(e) {
+				_that.userlevel=uni.getStorageSync("lzd-level")
+				console.log("监听")
+			});	
+		},
+
+		methods: {
+			recylerScroll: function(e) {
+				console.log(1)
+				if (e.contentOffset.y < -200) {
+					this.$set(this.tabBars[this.tabCurrentIndex], 'topShow', true)
+				} else {
+					this.$set(this.tabBars[this.tabCurrentIndex], 'topShow', false)
+				}
+			},
+			scrollToTop: function() {
+				const el = this.$refs['totop'+this.tabCurrentIndex][0]
+				console.log(el)
+				dom.scrollToElement(el, {
+					offset: -126
+				})
+			},
+			tofix(data){
+				return data.toFixed(2)
+			},
+			yishou(data){
+				if(data>=10000){
+					return (data/10000).toFixed(1)+'万'
+				}
+				else{
+					return data
+				}
+			},
+			//视频播放
+			playVideo(data,index){
+				uni.setStorageSync('tabvideo',data);
+				uni.setStorageSync('videoindex',index);
+				uni.navigateTo({
+					url:`/pages/index/funcbar/douyinlist`
+				})
+			},
+			//功能栏点击事件
+			funbarClick(index) {
+				var funcItem = this.functionList[index];
+				uni.navigateTo({
+					url: funcItem.url,
+					success: res => {},
+				});
+			},
+			//加载数据
+			loadData(source) {
+				//获取当前轮播图得索引
+				let index = this.tabCurrentIndex;
+				//获取当前轮播面板对象
+				let navItem = this.tabBars[index];
+				//如果是刷新则重置初始值
+				if (source == "refresh") {
+					navItem.loadingType = true;
+					navItem.loaded = false;
+					navItem.pageNo = 1;
+				}
+				//检测没有数据
+				if (!navItem.loadingType) {
+					return;
+				}		
+				console.log(navItem.cid)
+				uni.request({
+					url: `http://v2.api.haodanku.com/get_trill_data/apikey/zhouzhou/min_id/${navItem.pageNo}/back/10/cat_id/${navItem.cid}?`,
+				
+					success: res => {
+						let {
+							code,
+							data
+						} = res.data;
+						console.log(res)
+						//请求成功对应序号加一
+						navItem.pageNo++;
+						console.log(navItem.pageNo)
+						//结束下拉
+						if (source == "refresh") {
+							navItem.orderList = [];
+						}
+						//请求成功
+						if (code == 1) {
+							console.log(data[0])
+							console.log(navItem.orderList)
+							let shopList = data;
+							// 添加新增数据		
+							navItem.orderList = navItem.orderList.concat(shopList);
+							if(res.data.min_id==0||shopList.length!=10){
+								navItem.loadingType =false;
+								navItem.loadingText = '没有更多了';
+							}
+						}
+						else{
+							navItem.loadingType = false;
+							navItem.loadingText = '没有更多了';
+						}
+					},
+					fail: () => {
+						//请求失败，加入false标志
+						//navItem.isquest = false;
+						//请求失败的情况下更改请求的次数
+						navItem.loadingText = '没有更多了';
+					},
+					complete: () => {
+						navItem.refreshing = false;
+					}
+				})
+			},
+			//商品详情页面
+			navToDetail(id) {
+				uni.navigateTo({
+					url: "/pages/index/shopdetails?id=" + id
+				})
+			},
+			//上拉加载更多
+			loadMore(e) {
+				console.log("触发")
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+				console.log(currentTab.loadingType)
+				if (!currentTab.loadingType) {
+					currentTab.loadingText = '没有更多了';
+					return
+				}
+				currentTab.loadingText = "正在加载...";
+				this.loadData();
+			},
+			async tabChange(e) {
+				this.tabCurrentIndex = e.index;
+			
+				//如果是第一页的话就请求数据
+				if (this.tabBars[this.tabCurrentIndex].pageNo === 1&&this.tabBars[this.tabCurrentIndex].loaded==false) {
+					//请求成功序号增加,并且修改对应得加载状态
+					this.tabBars[this.tabCurrentIndex].loaded = true;
+					this.loadData("tabChange");
+				}
+			},
+
+			
+
+			//手指离开，下拉刷新触发修改状态
+			onrefresh(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+				this.iosRefresh = false;
+				currentTab.arrow = "↑";
+				currentTab.refreshText = "正在刷新...";
+				currentTab.refreshing = true;
+				this.loadData("refresh");
+				// this.pullrefresh(this.tabCurrentIndex, true)
+			},
+			//手指接触屏幕开始，下拉触发
+			onpullingdown(event) {
+				
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+
+				//如果为刷新中则不准再次触发刷新
+				if (currentTab.refreshing) {
+					return;
+				}
+				this.iosRefresh = this.isIos
+				if (Math.abs(event.pullingDistance) > Math.abs(event.viewHeight)) {
+					this.arrow = "↑";
+					currentTab.refreshText = "释放立即刷新";
+				} else {
+					this.arrow = "↓";
+					currentTab.refreshText = "下拉可以刷新";
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+	.flicon{
+		font-family: flicon;
+		font-size: 36upx;
+		color: #e74b45;
+	}
+	.slider-item {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 750upx;
+	}
+	.fixedItem {
+		width: 66rpx;
+		height: 66rpx;
+		background-color: #FFFFFF;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		position: absolute;
+		bottom: 30upx;
+		right: 30upx;
+		z-index: 999999;
+		box-shadow: 0 0 20px #ccc;
+	}
+	.content {
+		background-color: #f8f8f8;
+	}
+	
+	.slider{
+		flex: 1;
+		background-color: #f8f8f8;
+	}
+
+	/* 商品列表 */
+	.shop-list {
+		background-color: #FFFFFF;
+		width: 360upx;
+		height: 630upx;
+		flex-direction: column;
+		overflow: hidden;
+		border-radius: 10upx;
+		margin-top: 10upx;
+	}
+	
+	.shop-img {
+		width: 360upx;
+		height: 360upx;
+		border-radius: 10upx;
+		overflow: hidden;
+	}
+	.bofang{
+		position: absolute;
+		top: 180upx;
+		left: 180upx;
+		margin-top: -40upx;
+		margin-left: -40upx;
+		width: 80upx;
+		height: 80upx;
+		overflow:hidden;
+	}
+	
+	.shop-content {
+		padding: 20upx;
+		flex: 1;
+		position: relative;
+	}
+	
+	.shop-title {
+		position: relative;
+	}
+	
+	.shop-icn {
+		overflow:hidden;
+		position: absolute;
+		margin-right: 10upx;
+		width: 50upx;
+		height: 30upx;
+		left:  0;
+	}
+	
+	.til {	
+		line-height: 40upx;
+		color: #484848;
+		font-size: 26upx;
+		text-overflow: ellipsis;
+		lines: 2;
+	}
+	
+	.shop-price {
+		height: 40upx;
+		padding: 0;
+		justify-content: space-between;
+		align-items: center;
+		flex-direction: row;
+		position: relative;
+		margin:0 0 16upx;
+	}
+	
+	.now-price {
+		font-weight: bold;
+		font-size: 34upx;
+		padding-right: 10upx;
+		color: #fb6b73;
+	}
+	
+	.ago-price {
+		text-decoration: line-through;		
+		color: #969696;
+		font-size: 24upx;
+	}
+	
+	.progress-boxs {
+		justify-content: space-between;
+		align-items: center;
+		flex-direction: row;
+		margin: 6upx 0;
+	}
+	
+	.quan {
+		flex-direction: row;
+		height: 31upx;
+		line-height: 30upx;
+		font-size: 20upx;
+		border-style: solid;
+		border-color: #f51515;
+		border-width: 1upx;
+		margin-right: 40upx;
+		position: relative;
+	}
+	
+	.quan-img {
+		position: absolute;
+		left: -1upx;
+		width: 30upx;
+		height: 30upx;
+	}
+	
+	.quan-price {
+		margin-left: 20upx;
+		padding: 0 6upx;
+		color: #f51515;
+		font-size: 24upx;
+	}
+	
+	.yugu {
+		border-color:#ea3424;
+		border-style: solid;
+		border-width: 1upx;	
+		font-size: 20upx;
+		color: #ea3424;
+		margin: 10upx 0;
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+		background-color: #fdf6f2;
+	
+	}
+	
+	.volume {
+		font-size: 24upx;
+		color: #969696;
+	}
+	
+	.tui-white {
+		background-color: #FFFFFF !important;
+		margin-bottom: 10upx;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.tui-gray {
+		background-color: #fafafa;
+	}
+
+	.tui-slider-box {
+		width: 750upx;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.tui-slider {
+		width: 690upx;
+		height: 300upx;
+		border-radius: 12upx;
+		overflow: hidden;
+	}
+
+	.tui-img-radius {
+		border-radius: 12upx;
+	}
+
+	.tui-frame {
+		width: 690upx;
+		height: 300upx;
+		background-color: #fff;
+	}
+
+	.tui-slider-img {
+		width: 690upx;
+		height: 300upx;
+	}
+
+	.tui-indicator {
+		width: 690px;
+		height: 20px;
+		item-color: rgba(255, 255, 255, 0.4);
+		item-selected-color: #FFFFFF;
+		item-size: 14px;
+		position: absolute;
+		bottom: 24px;
+		left: 0;
+	}
+
+	.tui-loading {
+		margin-right: 15px;
+		height: 60px;
+		width: 60px;
+		color: #999999;
+	}
+
+	.tui-loadmore {	
+		width: 750px;
+		height: 80px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.loadmore-text {
+		font-size: 26px;
+		text-align: center;
+		color: #999999;
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+
+	.loadmore-line {
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		border-bottom-color: #e5e5e5;
+		width: 320px;
+		position: absolute;
+		z-index: -1;
+	}
+
+	.tui-refresh {
+		width: 750px;
+		height: 80px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.refresh-text {
+		text-align: center;
+		font-size: 26px;
+		color: #999999;
+	}
+
+	.ios-arrow {
+		color: #999999;
+		font-size: 42px;
+		font-weight: 300;
+		padding-right: 20px;
+		margin-left: -75px;
+	}
+</style>

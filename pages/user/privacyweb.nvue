@@ -1,0 +1,21 @@
+<template>
+	<div class="content">
+		 <web class="web" src="http://m.lizhiduo.cn/q/register.html"></web>
+	</div>
+</template>
+
+<script>
+	export default {
+		
+	}
+</script>
+
+<style>
+.content{
+	flex: 1;
+}
+.web{
+	width: 750upx;
+	flex: 1;
+}
+</style>

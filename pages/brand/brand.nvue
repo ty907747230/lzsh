@@ -1,0 +1,673 @@
+<template>
+	<!-- 品牌 -->
+	<div class="content">
+		<!-- uni 官方顶部选项卡组件 -->
+		<uni-tab-bar :drag="true" :tab-bars="tabBars" :tab-index="tabCurrentIndex" @tabChange="tabChange"></uni-tab-bar>
+		
+
+		<!-- slider就是uni swiper -->
+		<slider class="slider" :index="tabCurrentIndex" :infinite="false" @change="tabChange">
+
+			<list class="tui-list" @loadmore="loadMore(index1)" :ref="'tab'+index1" loadmoreoffset="5" v-for="(tab,index1) in tabBars"
+			 :key="index1">
+
+				<!-- 刷新组件 -->
+				<refresh class="tui-refresh" @refresh="onrefresh" @pullingdown="onpullingdown" :display="tab.refreshing? 'show' : 'hide'">
+					<loading-indicator class="tui-loading"></loading-indicator>
+					<text :class="[iosRefresh?'ios-arrow':'']" v-if="isIos">{{arrow}}</text>
+					<text class="refresh-text">{{tab.refreshText}}</text>
+				</refresh>
+
+				<cell v-if="index1==0" v-for="(item,index) in  tab.orderList" :key="index">
+					<!-- 精选-->
+					<div class="brand-content">
+						<!-- 标题 -->
+						<div class="brand-title" @click="navtoShop(item.id)">
+							<!-- <image class="bg-img" src="/static/brand/title_bg.png" mode="widthFix"></image> -->
+							<div class="brand-title-left">
+								<image class="brand-logo" :src="item.brand_logo" mode="widthFix"></image>
+								<text class="brand-title-wenzi">{{item.fq_brand_name}}</text>
+							</div>
+							<div class="brand-title-right">
+								<text class="brand-wenzi">更多</text>
+								<image class="brand-right" src="/static/brand/right.png" mode="widthFix"></image>
+							</div>
+						</div>
+						<div class="brand-content-list">
+							<div :key="indexx" class="brand-content-item" v-for="(itemx,indexx) in item.item" itemid @click="navToDetail(itemx.itemid)">
+								<div class="brand-content-item-img">
+									<image class="brand-content-item-img" :src="itemx.itempic" mode="widthFix"></image>
+									<text class="brand-price">券{{itemx.couponmoney}}</text>
+								</div>
+								<div class="now-price">
+									<text class="price-icon">￥</text>
+									<text class="couponmoney-num">{{itemx.itemendprice}}</text>
+								</div>
+								
+								<div class="earn-div" v-if="userlevel.on_off">
+									<text  class="earn-num">奖:{{(itemx.tkmoney*userlevel.level_percent).toFixed(2)}}</text>
+								</div>
+							</div> 
+						</div>
+					</div>			
+				</cell>
+				<cell  v-if="index1!=0" v-for="(item,index) in  tab.orderList" :key="index">
+					<!-- 品牌列表 -->
+					<div class="brand-list">
+						<div :key="indexl"  v-for="(iteml,indexl) in item" class="brand-list-item" @click="navtoShop(iteml.id)">
+								<image class="brand-list-img" :src="iteml.brand_logo" resize="contain"></image>
+								<text class="brand-list-w">{{iteml.fq_brand_name}}</text>
+						</div>
+					</div>	
+				</cell>
+
+				<!-- 加载组件 -->
+				<cell class="tui-loadmore">
+					<text class="loadmore-line" v-if="!tab.loadingType"></text>
+					<text class="loadmore-text tui-gray">{{tab.loadingText}}</text>
+				</cell>
+				
+			</list>
+		</slider>
+		
+	</div>
+</template>
+
+<script>	
+	import uniTabBar from '@/components/tab-nvue/tabbar.nvue'
+	const dom = weex.requireModule('dom')
+
+	export default {
+		components: {
+		
+			uniTabBar
+		},
+		data() {
+			return {
+				statusBarHeight: '0wx', //状态栏占位高度
+				// 功能栏
+				arrow: "",
+				iosRefresh: false,
+				refreshing: false, //刷新状态
+				refreshText: "下拉可以刷新",
+				tabCurrentIndex: 0, //当前的tab栏的索引
+				tabBars: [{
+						id: "精选",
+						type: 2,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 0,
+					},
+					{
+						id: "母婴",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 1,
+					},
+					{
+						id: "女装",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 2,
+					},
+					{
+						id: "食品",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 3,
+					},
+					{
+						id: "居家",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 4,
+					},
+					{
+						id: "美妆",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 5,
+					}, {
+						id: "男装",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 6,
+					}, {
+						id: "内衣",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 7,
+					}, {
+						id: "箱包",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 8,
+					}, {
+						id: "鞋靴",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 9,
+					}, {
+						id: "宠物",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 10,
+					}, {
+						id: "家电",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 11,
+					}, {
+						id: "车品",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 12,
+					}
+				],
+				userlevel:{}, //用户等级信息
+				// iosisshow:false
+			}
+		},
+		
+		//进入页面请求数据
+		created() {
+			// if(plus.os.name=='Android'){
+			// 	this.iosisshow=true
+			// }
+			// else{
+			// 	this.iosisshow=uni.getStorageSync('lzd-iosisshow');
+			// 	console.log(this.iosisshow)
+			// }
+			this.userlevel=uni.getStorageSync("lzd-level")
+			//获取状态栏高度给顶部占位节点
+			uni.getSystemInfo({
+				success: res => {
+					this.statusBarHeight = res.statusBarHeight + 'wx';
+				}
+			})
+			this.loadData();
+			var pages = getCurrentPages();
+			var page = pages[pages.length - 1];
+			var currentWebview = page.$getAppWebview();
+			var _that=this;
+			currentWebview.addEventListener('show', function(e) {
+				_that.userlevel=uni.getStorageSync("lzd-level")
+				console.log("监听")
+			});		
+		},
+
+		methods: {
+			//跳转商品
+			navtoShop(id){
+				uni.navigateTo({
+					url: `/pages/brand/brandshop?id=${id}`,
+				});
+			},
+			//加载数据
+			loadData(source) {
+				//获取当前轮播图得索引
+				let index = this.tabCurrentIndex;
+				//获取当前轮播面板对象
+				let navItem = this.tabBars[index];
+				//如果是刷新则重置初始值
+				if (source == "refresh") {
+					navItem.loadingType = true;
+					navItem.loaded = false;
+					navItem.pageNo = 1;
+				}
+				//检测没有数据
+				if (!navItem.loadingType) {
+					return;
+				}
+				var url;
+				//精选
+				if(navItem.type==2){
+					url=`http://39.100.111.131:8080/brand/min_id/${navItem.pageNo}/brandcat/1`;
+				}
+				else{
+					url=`http://39.100.111.131:8080/brandinfo/min_id/${navItem.pageNo}/brandcat/${navItem.cid}`;
+				}			
+				uni.request({
+					url,
+					success: res => {
+						let {
+							code,
+							data
+						} = res.data;
+						
+						//请求成功对应序号加一
+						navItem.pageNo++;
+						//结束下拉
+						if (source == "refresh") {
+							navItem.orderList = [];
+						}
+						//请求成功
+						if (code == 1) {
+							let shopList = data;
+							console.log(data[4])
+							// 添加新增数据		
+							navItem.orderList = navItem.orderList.concat(shopList);
+							//请求成功序号增加,并且修改对应得加载状态
+							navItem.loaded = true;		
+							if(shopList.length<20){
+								//判断是否还有数据
+								navItem.loadingType = false;
+								navItem.loadingText = '没有更多了';
+							}
+						}else{
+							//判断是否还有数据
+							navItem.loadingType = false;
+							navItem.loadingText = '没有更多了';
+						}
+					},
+					fail: () => {
+						//请求失败的情况下更改请求的次数
+						navItem.loadingText = '没有更多了';
+					},
+					complete: () => {
+						navItem.refreshing = false;
+					}
+				})
+			},
+
+			//商品详情页面
+			navToDetail(id) {
+				uni.navigateTo({
+					url: "/pages/index/shopdetails?id=" + id
+				})
+			},
+			//上拉加载更多
+			loadMore(e) {
+				console.log("触发")
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+				if (!currentTab.loadingType) {
+					currentTab.loadingText = '没有更多了';
+					return
+				}
+				currentTab.loadingText = "正在加载...";
+				this.loadData();
+			},
+			async tabChange(e) {
+				this.tabCurrentIndex = e.index;
+				//如果是第一页的话就请求数据
+				if (this.tabBars[this.tabCurrentIndex].pageNo === 1&&this.tabBars[this.tabCurrentIndex].loaded==false) {
+					//请求成功序号增加,并且修改对应得加载状态
+					this.tabBars[this.tabCurrentIndex].loaded = true;
+					this.loadData("tabChange");
+				}
+				
+			},
+
+			//手指离开，下拉刷新触发修改状态
+			onrefresh(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+				this.iosRefresh = false;
+				currentTab.arrow = "↑";
+				currentTab.refreshText = "正在刷新...";
+				currentTab.refreshing = true;
+				this.loadData("refresh");
+				// this.pullrefresh(this.tabCurrentIndex, true)
+			},
+			//手指接触屏幕开始，下拉触发
+			onpullingdown(event) {
+				//获取当前类目的刷新状态
+				var currentTab = this.tabBars[this.tabCurrentIndex];
+
+				//如果为刷新中则不准再次触发刷新
+				if (currentTab.refreshing) {
+					return;
+				}
+				this.iosRefresh = this.isIos
+				if (Math.abs(event.pullingDistance) > Math.abs(event.viewHeight)) {
+					this.arrow = "↑";
+					currentTab.refreshText = "释放立即刷新";
+				} else {
+					this.arrow = "↓";
+					currentTab.refreshText = "下拉可以刷新";
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+	.content {
+		background-color: #f8f8f8;
+		flex: 1;
+	}
+	
+	.slider{
+		flex: 1;
+		background-color: #f8f8f8;
+	}
+
+	/* 商品列表 */
+	.shop-list {
+		width: 710upx;
+		margin: 0upx 20upx 20upx;
+		height: 250upx;
+		background-color: #fff;
+		border-radius: 10upx;
+		flex-direction: row;
+	}
+
+	.tui-white {
+		background-color: #FFFFFF !important;
+		margin-bottom: 10upx;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.tui-gray {
+		background-color: #fafafa;
+	}
+
+	.tui-slider-box {
+		width: 750upx;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.tui-slider {
+		width: 690upx;
+		height: 300upx;
+		border-radius: 12upx;
+		overflow: hidden;
+	}
+
+	.tui-img-radius {
+		border-radius: 12upx;
+	}
+
+	.tui-frame {
+		width: 690upx;
+		height: 300upx;
+		background-color: #fff;
+	}
+
+	.tui-slider-img {
+		width: 690upx;
+		height: 300upx;
+	}
+
+	.tui-indicator {
+		width: 690px;
+		height: 20px;
+		item-color: rgba(255, 255, 255, 0.4);
+		item-selected-color: #FFFFFF;
+		item-size: 14px;
+		position: absolute;
+		bottom: 24px;
+		left: 0;
+	}
+
+	.tui-loading {
+		margin-right: 15px;
+		height: 60px;
+		width: 60px;
+		color: #999999;
+	}
+
+	.tui-list {
+		flex: 1;
+		padding-top: 10upx;
+	}
+
+	/* 精选 */
+	.brand-content{
+		background-color: #FFFFFF;
+		width: 700upx;
+		margin-left: 25upx;
+		border-radius: 14upx;
+		margin-bottom: 20upx;
+	}
+	
+	.brand-title{
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		padding:16upx 10upx;
+		background-image: linear-gradient(to right, #f3cb8c, #f9e9c6);;
+	}
+	
+	.brand-title-left{
+		flex-direction: row;
+		align-items: center;
+	}
+	.brand-title-right{
+		flex-direction: row;
+		align-items: center;
+	}
+	.brand-title-wenzi{
+		font-size: 30upx;
+	}
+	.brand-logo{
+		width: 100upx;
+		height: 50upx;
+		margin-right: 20upx;
+		border-radius: 6upx;
+	}
+	.brand-right{
+		width: 30upx;
+		height: 30upx;
+		margin-right: 16upx;
+	}
+	.brand-wenzi{
+		margin-right: 10upx;
+		font-size: 24upx;
+		color: #c48736;
+	}
+	.brand-content-list{
+		width: 700upx;
+		padding: 20upx 10upx;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+	.brand-content-item{
+		width: 210upx;
+		flex-direction: column;
+	}
+	.brand-content-item-img{
+		position: relative;
+		width: 210upx;
+		height: 220upx;
+		border-radius: 10upx;
+	}
+	.brand-price{
+		font-size: 22upx;
+		color: #fff;
+		position: absolute;
+		left: 2upx;
+		bottom: 2upx;
+		background-image: linear-gradient(to right, #fe5384, #ff895b);
+		padding: 2upx 10upx;
+		border-radius: 6upx;
+	}
+	.now-price{
+		flex-direction: row;
+		align-items: center;
+	}
+	.price-icon{
+		color: #ea3424;
+		padding-top: 10upx;
+		
+	}
+	.couponmoney-num{
+		color: #ea3424;
+		margin: 10upx 0;
+		font-size: 36upx;
+	}
+	.earn-div{
+		flex-direction: row;
+	}
+	.earn-num{
+		border-color:#ea3424;
+		border-style: solid;
+		border-width: 1upx;	
+		font-size: 24upx;
+		color: #ea3424;
+		padding: 4upx 10upx;
+		border-radius: 6upx;
+		background-color: #fdf4f4;
+	}
+		.brand-list{
+			
+			width: 750upx;
+			flex-direction: row;
+			flex-wrap: wrap;
+		}
+	.brand-list-item{
+	background-color: #FFFFFF;
+		width: 186upx;
+		height: 200upx;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		border-color: #efefef;
+		border-bottom-width: 1upx;
+		border-right-width: 1upx;
+		
+		border-style: solid;
+	}
+	
+	.brand-list-img{
+		width: 100upx;
+		height: 100upx;
+		border-radius: 100upx;
+		margin-bottom: 20upx;
+		border-color: #e9e9e9;
+		border-width: 1upx;
+		border-style: solid;
+	}
+	
+	.brand-list-w{
+		font-size: 26px;
+	}
+	
+	.tui-loadmore {
+		height: 100px;
+		width: 750px;
+		flex-direction: column;
+		justify-content: center;
+		position: relative;
+		align-items: center;
+	}
+
+	.loadmore-text {
+		font-size: 26px;
+		text-align: center;
+		color: #999999;
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+
+	.loadmore-line {
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		border-bottom-color: #e5e5e5;
+		width: 320px;
+		position: absolute;
+		z-index: -1;
+	}
+
+	.tui-refresh {
+		width: 750px;
+		height: 80px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.refresh-text {
+		text-align: center;
+		font-size: 26px;
+		color: #999999;
+	}
+
+	.ios-arrow {
+		color: #999999;
+		font-size: 42px;
+		font-weight: 300;
+		padding-right: 20px;
+		margin-left: -75px;
+	}
+</style>

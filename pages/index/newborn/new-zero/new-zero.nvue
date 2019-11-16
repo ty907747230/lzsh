@@ -1,0 +1,421 @@
+<template>
+	<div class="warp">
+		<div class="header">
+			<image class="header-logo" src="/static/index/new-zero/header.jpg" mode="widthFix"></image>
+			<image class="header-bz" src="/static/index/new-zero/pic_step.7998aa8d.png" mode="widthFix"></image>
+			<text class="flicon back-btn" @click="navBack">&#xe622;</text>
+		</div>
+		
+		<div class="new-people">
+			<div class="new-people-title">
+				<div class="new-people-title-block">
+					<div class="border-left">
+						<div class="border-left-lines"></div>
+						<div class="border-left-block"></div>
+					</div>
+					<text class="new-people-title-wz">新人0元首单推荐</text>
+					<div class="border-left">
+						<div class="border-left-block"></div>
+						<div class="border-right-lines"></div>
+					</div>
+				</div>
+				<text class="new-people-title-tips">新人首单限未购买过商品且未领取过红包的用户</text>
+			</div>
+			<div class="new-people-shop">
+				<div class="img-block">
+					<image class="img-shop" :src="shopList.pic_url" mode="widthFix"></image>
+					<image class="img-tip" src="/static/index/new-zero/icon_new.41d75670.png" mode=""></image>
+				</div>
+				<div class="content-block">
+					<text class="content-block-title">{{shopList.title}}</text>
+					<div class="youhui">
+						<text class="youhui-hb">红包￥{{shopList.red_packet}}</text>
+						<text class="youhui-yhq">￥{{shopList.coupon}}券</text>
+					</div>
+					
+					 <div class="process-content">
+						 <div class="process" >
+							 <div :style="{ width:shopList.percent*2.6 }" class="process-area"></div>
+							 <text class="process-per">{{shopList.percent}}%</text>
+						 </div>
+						 <text class="">还剩{{shopList.percent}}件</text>
+					 </div>
+					
+					<div class="content-block-bottom">
+						<div class="content-block-bottom-left">
+							<div class="content-block-bottom-paidprice">
+								<text class="price-icon">￥</text><text class="price-num">{{shopList.pay_money}}</text>
+								<text class="price-wz">付款价</text>
+							</div>
+							<div class="content-block-bottom-price">
+								<text class="price-ago">原价 ￥{{shopList.sale_price}}</text>
+							</div>
+							<text></text>
+						</div>
+						<div class="content-block-bottom-right">
+							<text @click="paidZeroShop" class="recevice-btn">领红包{{shopList.pay_money}}元购</text>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- 全员 -->
+		<div class="full-staff">
+			<div class="new-people-title">
+				<div class="new-people-title-block">
+					<div class="border-left">
+						<div class="border-left-lines"></div>
+						<div class="border-left-block"></div>
+					</div>
+					<text class="new-people-title-wz">全员尊享福利</text>
+					<div class="border-left">
+						<div class="border-left-block"></div>
+						<div class="border-right-lines"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="tips">
+			<text class="tips-title">活动规则：</text>
+			<text class="tips-item">{{textList}}</text>
+		</div>
+	</div>
+</template>
+
+<script>
+	const plug = uni.requireNativePlugin('Html5app-Baichuan');
+	export default {
+		data() {
+			return {
+				shopList:'',
+				textList:''
+			}
+		},
+		created() {
+			this.loadData()
+		},
+		methods: {
+			paidZeroShop(){
+				var data= uni.getStorageSync('lzd-user')
+				if (!data) {
+					uni.navigateTo({
+						url: '/pages/user/login',
+					});
+					return; 
+				}
+				
+				uni.request({
+					url: `http://zhou.lizhiduo.cn/CheckPurchase?code=${data.invite_code}`,
+					success: res => {
+						let {
+							code,
+							coupon_url,
+							msg
+						} = res.data
+						if(code==200){
+							 plug.openCoupon({"url":coupon_url,"openType":1},ret=>{
+							console.log(ret)
+							        });
+						}
+						if(code==203){
+							uni.showToast({
+								icon:'none',
+								title:msg
+							})
+						}
+					}
+				})
+			},
+			navBack(){
+				uni.navigateBack({
+					delta:1
+				})
+			},
+			loadData() {
+				this.loadZeroShop();
+				// this.loadMDShop();
+			},
+			loadZeroShop(){
+				uni.request({
+					url: 'http://zhou.lizhiduo.cn/ZeroYuanBuy',
+					success: res => {
+						let {
+							code,
+							data,
+							join_conditions
+						} = res.data
+						this.shopList=data[0];
+						this.textList=join_conditions.replace(/n/g,'')
+						this.textList.replace(/;/g,'1')
+						this.textList='\n1、活动页的新人首单商品新用户只能购买一次；\n2、红包只能领取一次，领取该商品红包后请尽快使用，若因该商品已被抢完仍未使用红包的，则该红包失效，不可再次领取其它商品红包；\n3、红包的有效时间是自领取开始到当天的24点；\n4、红包仅限指定商品使用，红包下单直减，在粉象APP上无销售订单、无返佣\n5、领取的红包可在【手机淘宝】- 我的淘宝 - 红包卡券查询\n6、部分活动商品青海，甘肃，宁夏，内蒙，新疆、西藏等偏远地区不包邮'
+						console.log(this.textList)
+					}
+				})
+			},
+			loadMDShop(){
+				uni.request({
+					url: 'https://api.fenxianglife.com/njia/tlj/activity/itemsNewV2?activityId=21',
+					success: res => {
+						let {
+							code,
+							data
+						} = res.data
+						console.log()
+						this.shopList=data[0]
+					}
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.tips{
+		padding: 30rpx;
+	}
+	
+	.tips-item{
+		color: #FFFFFF;
+		font-size: 26rpx;
+		line-height: 40rpx;
+	}
+	
+	.tips-title{
+		color: #FFFFFF;
+		font-size: 30rpx;
+		
+	}
+	
+	.flicon {
+		font-family: flicon;
+		font-size: 50upx;
+		color: #FFFFFF;
+	}
+	
+	.back-btn{
+		position: absolute;
+		left: 50rpx;
+		top: 70rpx;
+		font-weight: bold;
+	}
+	
+	.warp {
+		flex: 1;
+		background-color: #CA0318;
+	}
+
+	.header {
+		width: 750rpx;
+		position: relative;
+	}
+
+	.header-logo {
+		width: 750rpx;
+		height: 349rpx;
+	}
+
+	.header-bz {
+		width: 694rpx;
+		height: 88px;
+	}
+	
+	.new-people{
+		width: 750rpx;
+	}
+	
+	.new-people-title{
+		margin-top: 16rpx;
+		width: 750rpx;
+		height: 150rpx;
+		justify-content: center;
+		align-items: center;
+		margin-bottom: 16rpx;
+	}
+	
+	.border-left{
+		width: 116rpx;
+		height: 20rpx;
+		align-items: center;
+		flex-direction: row;
+	}
+	
+	.border-left-lines{
+		width: 100rpx;
+		height: 2rpx;
+		background-image: linear-gradient(to right, #D53B4B, #FFFAE8);
+	}
+	
+	.border-left-block{
+		width: 10rpx;
+		height: 10rpx;
+		background-color: #FFFFFF;
+		transform: rotateZ(45deg);
+	}
+	
+	.border-right-lines{
+		width: 100rpx;
+		height: 2rpx;
+		background-image: linear-gradient(to right, #FFFAE8, #D53B4B);
+	}
+	
+	.new-people-title-block{
+		width: 750rpx;
+		height: 60rpx;
+		justify-content: center;
+		align-items: center;
+		flex-direction: row;
+	}
+	
+	.new-people-title-wz{
+		font-size: 36rpx;
+		color: #FFFFFF;
+		margin-bottom: 10rpx;
+		margin: 0 20rpx 10rpx;
+	}
+	
+	.new-people-title-tips{
+		font-size: 28rpx;
+		color: #FFFFFF;
+	}
+	
+	.new-people-shop{
+		width: 690rpx;
+		height: 300rpx;
+		background-color: #FFFFFF;
+		border-radius: 16rpx;
+		padding: 20rpx;
+		margin: 0 30rpx;
+		flex-direction: row;
+	}
+	
+	.img-block{
+		width: 260rpx;
+		height: 260rpx;
+		margin-right: 16rpx;
+	}
+	
+	.img-tip{
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 68rpx;
+		height: 76rpx;
+		z-index:1;
+	}
+	
+	.img-shop{
+		width: 260rpx;
+		height: 260rpx;
+	}
+	
+	.content-block{
+		flex: 1;
+	}
+	
+	.content-block-title{
+		font-size: 30rpx;
+	}
+	
+	.youhui{
+		flex-direction: row;
+		margin: 10rpx 0;
+	}
+	
+	.youhui-hb{
+		font-size: 26rpx;
+		margin-right: 20rpx;
+		background-color: #FFE9E9;
+		padding: 6rpx 12rpx;
+		color: #CF3036;
+		font-weight: bold;
+		border-radius: 6rpx;
+	}
+	
+	.youhui-yhq{
+		font-size: 26rpx;
+		background-color: #FFF1D6;
+		padding: 6rpx 12rpx;
+		color: #DA9C29;
+		font-weight: bold;
+		border-radius: 6rpx;
+	}
+	
+	.content-block-bottom{
+		flex-direction: row;
+		height: 100rpx;
+		align-items: center;
+		justify-content: space-between;
+	}
+	
+	.content-block-bottom-left{
+		
+	}
+	
+	.content-block-bottom-paidprice{
+		flex-direction: row;
+		justify-content: flex-end;
+		align-items: flex-end;
+	}
+	
+	.price-icon{
+		color: #EA0000;
+	}
+	
+	.price-num{
+		color: #EA0000;
+		font-size: 46rpx;
+		font-weight: bold;
+		margin-top: 6rpx;
+	}
+	
+	.price-wz{
+		color: #545454;
+		font-size: 28rpx;
+		margin-left: 12rpx;
+	}
+	
+	.price-ago{
+		color: #949494;
+		text-decoration: line-through;
+		font-size: 28rpx;
+	}
+	
+	.content-block-bottom-right{
+		
+	}
+	
+	.recevice-btn{
+		color: #FFFFFF;
+		font-size: 30rpx;
+		background-color: #FF462D;
+		border-radius: 40rpx;
+		padding: 14rpx;
+		background-image: linear-gradient(to right, #FF5B30, #FF2228);
+	}
+	
+	.process-content{
+		flex-direction: row;
+		margin: 16rpx 0;
+	}
+	
+	.process{
+		width: 260rpx;
+		background-color: #FFEDED;
+		height: 36rpx;
+		border-radius: 36rpx;
+		align-items: center;
+		flex-direction: row;
+	}
+	
+	.process-area{
+		background-image:linear-gradient(to right, #FF8482, #FF2229);
+		border-radius: 36rpx;
+		height: 36rpx;
+	}
+	
+	.process-per{
+		position: absolute;
+		right: 30rpx;
+		font-size: 24rpx;
+	}
+</style>

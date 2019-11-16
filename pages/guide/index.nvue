@@ -1,0 +1,30 @@
+<template>
+    <div class="content"></div>
+</template>
+
+<script>
+export default {
+    created() {
+        this.checkGuide();
+    },
+
+    methods: {
+        checkGuide() {
+            // 思路： 检测是否有启动缓存，如果没有，就是第一次启动，第一次启动就去 启动介绍页面
+            const launchFlag = uni.getStorageSync('lzd-flag');
+			console.log(launchFlag)
+            if (launchFlag) {
+                uni.switchTab({
+                    url: '/pages/index/index'
+                });
+            } else {
+                uni.redirectTo({
+                    url: '/pages/guide/guide'
+                });
+            }
+        }
+    }
+};
+</script>
+
+<style></style>
