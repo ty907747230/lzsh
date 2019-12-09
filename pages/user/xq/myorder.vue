@@ -3,8 +3,8 @@
 	<view class="container">
 		<!-- 平台类型 -->
 		<view class="pt-type">
-			<view :key='index' class="pt-type-item" v-for="(item,index) in typelist"  @click="clickType(index)">
-				<text  :class="[index==currentType?'pt-type-item-active':'']">
+			<view :key='index' class="pt-type-item" v-for="(item,index) in typelist" @click="clickType(index)">
+				<text :class="[index==currentType?'pt-type-item-active':'']">
 					{{item.val}}
 				</text>
 			</view>
@@ -22,11 +22,11 @@
 		<view class="white-space">
 
 		</view>
-		
-		
-		
+
+
+
 		<view class="order-item" v-for="(item,index) in navlist" :key="index" v-if="index==currentItem">
-			<seize-seat typeimg='noorder'  v-if="item.orderList.length==0"></seize-seat>
+			<seize-seat typeimg='noorder' v-if="item.orderList.length==0"></seize-seat>
 			<view class="order-content" v-if="item.orderList.length!=0" v-for="(items,indexs) in item.orderList" :key="indexs">
 				<view class="order-content-left">
 					<image :src="items.item_img" mode="aspectFill"></image>
@@ -37,8 +37,11 @@
 					</view>
 					<view class="order-content-content">
 						<view class="creat-data">
-							<text class="creat-data-w">创建日</text>
-							<text>{{items.tb_paid_time}}</text>
+							<text class="creat-data-w">创建日 {{items.tb_paid_time}}</text>
+							<text class="order-status weiquan" v-if="items.tk_status==0">维权</text>
+							<text class="order-status fukuan" v-if="items.tk_status==1">已付款</text>
+							<text class="order-status jiesuan" v-if="items.tk_status==2">已结算</text>
+							<text class="order-status shixiao" v-if="items.tk_status==3">已失效</text>
 						</view>
 						<!-- <view class="">
 							<text>结算日</text>
@@ -76,12 +79,20 @@
 		data() {
 			return {
 				currentItem: 0,
-				currentType:0,
+				currentType: 0,
 				token: "",
-				typelist:[
-					{val:'淘宝',platform:0},
-					{val:'京东',platform:1},
-					{val:'拼多多',platform:2}
+				typelist: [{
+						val: '淘宝',
+						platform: 0
+					},
+					{
+						val: '京东',
+						platform: 1
+					},
+					{
+						val: '拼多多',
+						platform: 2
+					}
 				],
 				navlist: [{
 						val: "所有订单",
@@ -133,7 +144,7 @@
 		},
 		methods: {
 			// type点击事件
-			clickType(index){
+			clickType(index) {
 				this.currentType = index;
 				this.loadData("typeChange");
 			},
@@ -156,11 +167,13 @@
 					mask: true
 				})
 				console.log(this.currentType)
-				var typeItem=this.typelist[this.currentType]
-				
+				var typeItem = this.typelist[this.currentType]
+
 				var navItem = this.navlist[this.currentItem];
+				console.log(source);
 				//刷新或者类型切换都会重新请求数据
-				if (source == "refresh"||source=="typeChange") {
+				if (source == "refresh") {
+					console.log("清空");
 					navItem.loadingType = 'more';
 					navItem.loaded = false;
 					navItem.pageNo = 1;
@@ -168,6 +181,15 @@
 					uni.stopPullDownRefresh();
 				}
 				
+				if(source == "typeChange"){
+					this.navlist.forEach(e=>{
+						e.loadingType = 'more';
+						e.loaded = false;
+						e.pageNo = 1;
+						e.orderList = [];
+					})
+				}
+
 				//检测没有数据
 				if (navItem.loadingType === "nomore") {
 					uni.hideLoading();
@@ -180,9 +202,8 @@
 				}
 				navItem.loadingType = "loading";
 				console.log(typeItem.platform)
-				this.$api.MyOrders(this.token, navItem.type, navItem.pageNo, 10,typeItem.platform).then(res => {
+				this.$api.MyOrders(this.token, navItem.type, navItem.pageNo, 10, typeItem.platform).then(res => {
 					uni.hideLoading();
-					console.log(res)
 					let {
 						code,
 						data
@@ -200,8 +221,8 @@
 						navItem.loaded = true;
 						//判断是否还有数据
 						navItem.loadingType = data.page_info.has_next ? 'more' : "nomore";
-					}else if(code == 2001){
-						navItem.loadingType ="nomore";
+					} else if (code == 2001) {
+						navItem.loadingType = "nomore";
 					}
 					//token过期
 					else {
@@ -228,13 +249,15 @@
 </script>
 
 <style lang="scss">
-	page{
+	page {
 		background-color: #F7F7F7;
 	}
+
 	.container {
-		
+
 		width: 100%;
-		.pt-type{
+
+		.pt-type {
 			width: 100%;
 			padding: 0 40upx;
 			display: flex;
@@ -246,6 +269,7 @@
 			font-size: $font-base;
 			border-bottom: 1upx solid #f8f8f8;
 			z-index: 1;
+
 			.pt-type-item {
 				flex: 1;
 				padding: 10upx 0;
@@ -253,6 +277,7 @@
 				display: flex;
 				justify-content: center;
 			}
+
 			.pt-type-item-active {
 				color: #FFFFFF;
 				background-color: #F56657;
@@ -260,6 +285,7 @@
 				border-radius: 70upx;
 			}
 		}
+
 		.nav {
 			width: 100%;
 			padding: 0 40upx;
@@ -272,9 +298,11 @@
 			font-size: $font-lg;
 			z-index: 1;
 			top: 70upx;
+
 			.nav-item {
 				padding: 10upx 0;
 			}
+
 			.nav-item-active {
 				color: #f00;
 				border-bottom: 1px solid #f00;
@@ -375,6 +403,25 @@
 
 					.creat-data {
 						margin-bottom: 6upx;
+						.order-status{
+							padding: 2upx 16upx;
+							border-radius: 30upx;
+							color: #FFFFFF;
+							margin-left: 20upx;
+							border:1upx solid #FFFFFF;
+						}
+						.weiquan{
+							background-color: #DD5353;
+						}
+						.fukuan{
+							background-color: #0081FF;
+						}
+						.jiesuan{
+							background-color: #44CF85;
+						}
+						.shixiao{
+							background-color: #BCBCBC;
+						}
 						.creat-data-w {
 							margin-right: 10upx;
 						}

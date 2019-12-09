@@ -2,8 +2,8 @@
     "name" : "荔枝生活",
     "appid" : "__UNI__B09BA0B",
     "description" : "",
-    "versionName" : "2.2.3",
-    "versionCode" : 224,
+    "versionName" : "2.5.3",
+    "versionCode" : 253,
     "transformPx" : false,
     "networkTimeout" : {
         "request" : 6000

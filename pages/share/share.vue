@@ -123,7 +123,7 @@
 						</scroll-view>
 
 						<view class="qrcode">
-							<image @tap="showBigImg()"  :src="qrCodeImg" mode="widthFix"></image>
+							<image @tap="showBigImg()" :src="qrCodeImg" mode="widthFix"></image>
 							<label class="checkbox">
 								<checkbox checked="true" class="box" :value="qrCodeImg" />
 							</label>
@@ -189,6 +189,13 @@
 		},
 		methods: {
 			copyTkl() {
+				if(!this.tkl){
+					uni.showToast({
+						icon: "none",
+						title: "口令正在生成，请稍后重试"
+					})
+					return
+				}
 				uni.setClipboardData({
 					data: `(${this.tkl})`,
 					success: () => {
@@ -199,21 +206,21 @@
 					}
 				})
 			},
-			shareQQ(){
-				if(!this.qrCodeImg){
+			shareQQ() {
+				if (!this.qrCodeImg) {
 					this.$msg('导图正在生成')
 				}
 				uni.showLoading({
-					mask:true,
-					title:'正在发起分享'
+					mask: true,
+					title: '正在发起分享'
 				})
 				uni.setClipboardData({
-					data:this.contentValue,
-					success:()=>{
+					data: this.contentValue,
+					success: () => {
 						this.$msg("已帮你自动复制分享文案")
 					}
 				})
-				var shareObj={};
+				var shareObj = {};
 				shareObj.provider = "qq";
 				shareObj.type = 2;
 				var downLoader = plus.downloader.createDownload(this.qrCodeImg, {}, function(download, status) {
@@ -226,15 +233,15 @@
 							uni.hideLoading()
 							console.log("分享失败")
 						});
-					}else{
+					} else {
 						uni.hideLoading()
 						console.log("分享失败")
 					}
 				})
-				downLoader.start();	
+				downLoader.start();
 			},
-			sharePYQ(){
-				if(!this.qrCodeImg){
+			sharePYQ() {
+				if (!this.qrCodeImg) {
 					this.$msg('导图正在生成');
 					return
 				}
@@ -243,8 +250,8 @@
 				// 	title:'正在发起分享'
 				// })
 				uni.setClipboardData({
-					data:this.contentValue,
-					success:()=>{
+					data: this.contentValue,
+					success: () => {
 						this.$msg("已帮你自动复制分享文案")
 					}
 				})
@@ -272,26 +279,42 @@
 				// downLoader.start();	
 			},
 			shareWX() {
-				if(!this.qrCodeImg){
+				if (!this.qrCodeImg) {
 					this.$msg('导图正在生成');
 					return
 				}
 				uni.setClipboardData({
-					data:this.contentValue,
-					success:()=>{
+					data: this.contentValue,
+					success: () => {
 						this.$msg("已帮你自动复制分享文案")
 					}
 				})
-				
+
 				var shareObj = {};
 				shareObj.provider = "weixin";
 				shareObj.scene = "WXSceneSession";
 				shareObj.type = 2;
 				shareObj.imageUrl = this.qrCodeImg;
+				shareObj.fail=function(e){
+					console.log(e);
+				}
+				shareObj.complete=function(e){
+					console.log(e);
+				}
+				shareObj.success=function(e){
+					console.log(e);
+				}
 				uni.share(shareObj);
 			},
 			//下载图片
 			downImg() {
+				if(!this.tkl){
+					uni.showToast({
+						icon: "none",
+						title: "口令正在生成，请稍后重试"
+					})
+					return
+				}
 				uni.showLoading({
 					mask: true,
 					title: "正在下载"
@@ -352,7 +375,7 @@
 			 *2.如果本地不存在则网络下载,缓存到本地,再设置图片
 			 * */
 			setImg(imgId, loadUrl) {
-				var _that=this;
+				var _that = this;
 				if (imgId == null || loadUrl == null) return;
 				//图片下载成功 默认保存在本地相对路径的"_downloads"文件夹里面, 如"_downloads/logo.jpg"
 				var filename = loadUrl.substring(loadUrl.lastIndexOf("/") + 1, loadUrl.length);
@@ -373,7 +396,7 @@
 
 			/*联网下载图片,并设置给<img>*/
 			setImgFromNet(imgId, loadUrl, relativePath) {
-				var _that=this;
+				var _that = this;
 				//先设置下载中的默认图片
 				//创建下载任务
 				var dtask = plus.downloader.createDownload(loadUrl, {}, function(d, status) {
@@ -408,12 +431,12 @@
 			 * relativePath 本地相对路径 例如:"_downloads/logo.jpg"
 			 */
 			setImgFromLocal(imgId, relativePath) {
-				var _that=this;
+				var _that = this;
 				//本地相对路径("_downloads/logo.jpg")转成SD卡绝对路径("/storage/emulated/0/Android/data/io.dcloud.HBuilder/.HBuilder/downloads/logo.jpg");
 				var sd_path = plus.io.convertLocalFileSystemURL(relativePath);
 				this.pictures.push("file://" + sd_path);
 				this.picNum++;
-				console.log(this.picLength,this.picNum)
+				console.log(this.picLength, this.picNum)
 				//这里要注意picNu ++的地方，要在图片下载完成后或者失败后；
 				if (this.picLength == this.picNum) {
 					console.log("开始分享")
@@ -423,9 +446,9 @@
 					};
 					plus.share.sendWithSystem(msg, function(e) {
 						uni.hideLoading()
-					}, function(e) { 
-uni.hideLoading()
-						
+					}, function(e) {
+						uni.hideLoading()
+
 					});
 				}
 			},
@@ -433,14 +456,14 @@ uni.hideLoading()
 			//分享
 			handleShare() {
 				uni.showLoading({
-					title:"正在发起分享",
-					mask:true
+					title: "正在发起分享",
+					mask: true
 				})
-			
-				this.picLength=this.checkImgList.length;
-				this.picNum=0;
+
+				this.picLength = this.checkImgList.length;
+				this.picNum = 0;
 				this.relativePathArr = [];
-				this.pictures=[];
+				this.pictures = [];
 				console.log(this.checkImgList)
 				for (var i = 0; i < this.checkImgList.length; i++) {
 					this.setImg("img" + i, this.checkImgList[i]);
@@ -448,14 +471,28 @@ uni.hideLoading()
 			},
 			//图片预览
 			showBigImg(src) {
-				if(!src){
-					src=this.previewList.length-1;
+				try {
+					console.log(src);
+					console.log(this.previewList[src]);
+					if (!src) {
+						src = this.previewList.length - 1;
+					}
+
+					uni.previewImage({
+						current: src,
+						urls: this.previewList,
+						// indicator: "number"
+						fail: (e) => {
+							console.log(e);
+						},
+						complete: res => {
+							console.log(res);
+						}
+					})
+
+				} catch (e) {
+					console.log(e);
 				}
-				uni.previewImage({
-					current: src,
-					urls: this.previewList,
-					// indicator: "number"
-				})
 			},
 			//tab栏点击切换
 			tabClick(index) {
@@ -509,7 +546,7 @@ uni.hideLoading()
 					this.contentValue =
 						`${this.shopItem.title}\n【在售价】${this.shopItem.size}元\n【券后价】${this.shopItem.quanhou_jiage}元\n————\n${this.shopItem.jianjie}`;
 					// this.comment = `【下单链接】${this.shopItem.item_url}\n【邀请码】${this.$store.state.user.invite_code}`;
-				}		
+				}
 			});
 			//请求二维码
 			this.$api.qrCode(options.id, options.rid).then(res => {
@@ -538,7 +575,7 @@ uni.hideLoading()
 				}
 			});
 
-			
+
 		}
 	}
 </script>
@@ -724,6 +761,7 @@ uni.hideLoading()
 							width: 66%;
 							position: relative;
 							margin: 30upx auto;
+
 							image {
 								width: 100%;
 							}
@@ -734,7 +772,7 @@ uni.hideLoading()
 								top: 10upx;
 								transform: scale(0.8);
 								margin: 0;
-								padding:10upx 10upx 40upx 40upx;
+								padding: 10upx 10upx 40upx 40upx;
 
 								checkbox .wx-checkbox-input {
 									border-radius: 50% !important;
@@ -772,7 +810,7 @@ uni.hideLoading()
 										right: 6upx;
 										top: 10upx;
 										transform: scale(0.8);
-										padding:10upx 10upx 40upx 40upx;
+										padding: 10upx 10upx 40upx 40upx;
 										margin: 0;
 
 										checkbox .wx-checkbox-input {

@@ -22,7 +22,7 @@ export default {
 
 				if (process.env.NODE_ENV === 'development') {
 					if (statusCode === 200) {
-						//console.log(options.url)
+						// console.log(options.url)
 						// console.log("【" + _config.requestId + "】 结果：" + JSON.stringify(response.data))
 					}
 				}

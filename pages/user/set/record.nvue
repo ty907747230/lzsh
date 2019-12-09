@@ -151,7 +151,7 @@
 		background-color: #f7f7f7;
 	}
 	.flicon{
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 28upx;
 	}
 	.tui-refresh {

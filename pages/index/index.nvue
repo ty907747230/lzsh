@@ -50,22 +50,22 @@
 
 							<div class="headlines">
 								<image src="/static/index/head_logo.jpg" class="headlines-img" mode="widthFix"></image>
-								<slider class="head-slider" interval="3000" auto-play="true">
-									<div :key="indexh" class="head-slider-item" v-for="(itemh,indexh) in head_info">
-										<text @click="openWeb(itemh.url)" class="head-slider-item-w">{{itemh.name}}</text>
+								<slider class="head-slider" interval="3000" auto-play="true" infinite='true'>
+									<div @click="openWeb(itemh.url)" :key="indexh" class="head-slider-item" v-for="(itemh,indexh) in head_info">
+										<text class="head-slider-item-w">{{itemh.name}}</text>
 									</div>
 								</slider>
 							</div>
 
 							<div class="new-people">
 								<image src="/static/index/xr_bg.png" class="bg-img" mode="widthFix"></image>
-								<div @click="toNewZero" class="people-left">
+								<div @click="toweb" class="people-left">
 									<text class="xinren-title">新人0元首单</text>
 									<text class="xinren-tips">新人专享免费购</text>
 									<image class="head-img" src="/static/index/new-zero/head_img.jpg" mode=""></image>
 								</div>
 								<div class="people-right"><text class="xinren-title">暂请期待</text>
-								<image class="head-img" src="/static/index/new-zero/head_img.jpg" mode=""></image>
+									<image class="head-img" src="/static/index/new-zero/head_img.jpg" mode=""></image>
 								</div>
 							</div>
 
@@ -169,8 +169,11 @@
 
 <script>
 	import uniTabBar from '@/components/tab-nvue/tabbar-i.nvue'
+
 	const dom = weex.requireModule('dom')
 	const animation = weex.requireModule('animation')
+
+	const plug = uni.requireNativePlugin('Html5app-Baichuan');
 
 	export default {
 		components: {
@@ -197,15 +200,16 @@
 						desc: "抖音好货",
 						imgurl: "/static/icons/dy.jpg",
 					},
+					// {
+					// 	url: "/pages/index/funcbar/tmcs",
+					// 	desc: "天猫超市",
+					// 	imgurl: "/static/icons/tm.jpg",
+					// },
 					{
-						url: "/pages/index/funcbar/tmcs",
-						desc: "天猫超市",
-						imgurl: "/static/icons/tm.jpg",
-					},
-					{
-						url: "/pages/category/category",
-						desc: "分类",
-						imgurl: "/static/icons/fl.jpg",
+						url: "/pages/index/",
+						name: 'elm',
+						desc: "饿了么",
+						imgurl: "/static/icons/ele.jpg",
 					},
 					{
 						url: "/pages/index/funcbar/taoqianggou",
@@ -222,6 +226,11 @@
 						url: "/pages/index/funcbar/jd",
 						desc: "京东",
 						imgurl: "/static/icons/jd.jpg",
+					},
+					{
+						url: "/pages/user/update/update",
+						desc: "升级vip",
+						imgurl: "/static/icons/vip.jpg",
 					},
 					{
 						url: "/pages/index/funcbar/highyongjin",
@@ -359,8 +368,8 @@
 		beforeCreate() {
 			const domModule = weex.requireModule('dom')
 			domModule.addRule('fontFace', {
-				'fontFamily': "flicon",
-				'src': "url('https://at.alicdn.com/t/font_1357595_hs9831moi1o.ttf')",
+				'fontFamily': "nflicon",
+				'src': "url('https://at.alicdn.com/t/font_1357595_8ewpctu15km.ttf')",
 			});
 		},
 
@@ -435,23 +444,31 @@
 			// #endif
 		},
 		beforeDestroy() {
-			
+
 		},
 		methods: {
-			getHeadInfo(){
+			getHeadInfo() {
 				uni.request({
-					url:'http://zhou.lizhiduo.cn/Headlines',
-					success:res=>{
-						let{code,data}=res.data;
-						if(code==200){
-							this.head_info=data
+					url: 'http://zhou.lizhiduo.cn/Headlines',
+					success: res => {
+						let {
+							code,
+							data
+						} = res.data;
+						if (code == 200) {
+							this.head_info = data
 						}
 					}
 				})
 			},
-			toNewZero(){
+			toweb() {
 				uni.navigateTo({
-					url:'/pages/index/newborn/new-zero/new-zero'
+					url: '/pages/index/newborn/new-zero/zero-web'
+				})
+			},
+			toNewZero() {
+				uni.navigateTo({
+					url: '/pages/index/newborn/new-zero/new-zero'
 				})
 			},
 			checkGuide() {
@@ -478,10 +495,16 @@
 				plus.runtime.install(this.packgePath, {
 					force: true
 				}, function() {
-					plus.runtime.restart()
+					setTimeout(function() {
+						plus.runtime.restart()
+					}, 1000)
 				})
 			},
 			createTask(downloadLink) {
+				// uni.showToast({
+				// 	icon: 'none',
+				// 	title: '正在下载更新'
+				// })
 				//判断是否已经存在任务
 				if (this.packgePath) {
 					this.installPackge()
@@ -496,6 +519,10 @@
 									tempFilePath: res.tempFilePath,
 									success: (res) => {
 										this.packgePath = res.savedFilePath
+										uni.showToast({
+											icon: 'none',
+											title: '更新完成'
+										})
 										// 进行安装
 										this.installPackge()
 										// 任务完成，关闭下载任务
@@ -507,9 +534,9 @@
 					})
 				}
 			},
-			openWeb(url){
+			openWeb(url) {
 				uni.navigateTo({
-					url:`/pages/index/kzweb?url=${url}`
+					url: `/pages/index/kzweb?url=${url}`
 				})
 			},
 			toSwiper(url) {
@@ -580,8 +607,37 @@
 			},
 			//功能栏点击事件
 			funbarClick(index) {
-
+				if (index == 7 || index == 3) {
+					if (!uni.getStorageSync("lzd-user").token) {
+						uni.navigateTo({
+							url: '/pages/user/login',
+						});
+						return
+					}
+				}
 				var funcItem = this.functionList[index];
+				if (funcItem.name == 'elm') {
+					if (!uni.getStorageSync("lzd-user").relation_id) {
+						uni.showToast({
+							icon: 'none',
+							title: '请先去个人中心完成淘宝授权'
+						})
+						return
+					}
+					uni.request({
+						url: `http://39.100.111.131:8080/Eelement?relation_id=${uni.getStorageSync("lzd-user").relation_id}`,
+						success: res => {
+							console.log(res);
+							plug.detailPage({
+								url: res.data.data,
+								"openType": 0
+							}, result => {
+							console.log(result);
+							});
+						}
+					})
+					return
+				}
 				if (!funcItem.url) {
 					uni.showToast({
 						title: '功能正在更新中',
@@ -669,7 +725,7 @@
 							//请求成功序号增加,并且修改对应得加载状态
 							navItem.loaded = true;
 							//判断是否还有数据
-							navItem.loadingType = shopList.length ==this.pageSize ? 'true' : "false";
+							navItem.loadingType = shopList.length == this.pageSize ? 'true' : "false";
 						}
 					},
 					fail: () => {
@@ -704,11 +760,11 @@
 				this.loadData();
 			},
 			async changeTab(e) {
-				
+
 				this.tabIndex = e.index;
 				//如果是第一页的话就请求数据，因为轮播和组件都会触发，所以加入状态判断
-				if (this.tabBars[this.tabIndex].pageNo === 1&& this.tabBars[this.tabIndex].loaded == false) {
-					
+				if (this.tabBars[this.tabIndex].pageNo === 1 && this.tabBars[this.tabIndex].loaded == false) {
+
 					//请求成功序号增加,并且修改对应得加载状态
 					this.tabBars[this.tabIndex].loaded = true;
 					this.loadData();
@@ -798,25 +854,28 @@
 </script>
 
 <style>
-	.head-img{
+	.head-img {
 		position: absolute;
 		width: 100rpx;
 		height: 100rpx;
 		bottom: 20rpx;
 		right: 20rpx;
 	}
-	
-	.xinren-title{
+
+	.xinren-title {
 		font-size: 30rpx;
 	}
-	.xinren-tips{
+
+	.xinren-tips {
 		color: #949494;
 		font-size: 20rpx;
 	}
-	.slider{
+
+	.slider {
 		flex: 1;
 		background-color: #f8f8f8;
 	}
+
 	.slider-item {
 		position: absolute;
 		top: 0;
@@ -867,7 +926,7 @@
 	}
 
 	.head-slider-item-w {
-		
+
 		font-size: 28rpx;
 		lines: 1;
 		text-overflow: ellipsis;
@@ -1003,7 +1062,7 @@
 
 	/* 好券 */
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 36upx;
 		color: #e74b45;
 	}

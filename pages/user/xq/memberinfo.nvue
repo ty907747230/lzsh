@@ -1,0 +1,207 @@
+<template>
+	<div class="content">
+		<div class="currency">
+			<div class="currency-title">
+				<text class="currency-title-w">通用信息</text>
+			</div>
+			<div class="currency-info">
+				<image class="currency-info-h" :src="info.head_img_url"></image>
+				<div class="currency-info-i">
+					<div class="currency-info-top">
+						<text class="currency-info-i-t">{{info.name}}</text>
+						<image v-if="info.level==2" class="user-level" src="/static/huiyuan/level-3.png" mode="widthFix"></image>
+						<image v-if="info.level==1" class="user-level" src="/static/huiyuan/level-2.png" mode="widthFix"></image>
+						<image v-if="info.level==0" class="user-level" src="/static/huiyuan/level-1.png" mode="widthFix"></image>
+						<image v-if="info.level==3" class="user-level" src="/static/huiyuan/three_level.png" mode="widthFix"></image>
+					</div>
+					<text class="currency-info-i-w">邀请码：{{info.invite_code}}</text>
+				</div>
+				
+			</div>
+		</div>
+		<div class="detail">
+			<div class="detail-title">
+				<text class="detail-title-w">详细信息</text>
+			</div>
+			<div class="detail-info">
+				<scroller  class="scroll" scroll-y="true" >
+					<div class="detail-info-item">
+						<text class="detail-info-t">手机号：</text>
+						<text class="detail-info-d">{{info.phone||'未绑定'}}</text>
+					</div>
+					<div class="detail-info-item">
+						<text class="detail-info-t">微信号：</text>
+						<text class="detail-info-d">{{info.wechat_num||'未绑定'}}</text>
+					</div>
+					<div class="detail-info-item">
+						<text class="detail-info-t">最后活跃时间：</text>
+						<text class="detail-info-d">{{info.last_activity_time||'无'}}</text>
+					</div>
+					<div class="detail-info-item">
+						<text class="detail-info-t">累计收入：</text>
+						<text class="detail-info-d">{{info.gain_all}}</text>
+					</div>
+					<div class="detail-info-item">
+						<text class="detail-info-t">下级会员总数：</text>
+						<text class="detail-info-d">{{info.down_user_count}}</text>
+					</div>
+					<div class="detail-info-item">
+						<text class="detail-info-t">淘宝订单总数：</text>
+						<text class="detail-info-d">{{info.tb_order_count}}</text>
+					</div>
+					<div class="detail-info-item">
+						<text class="detail-info-t">京东订单总数：</text>
+						<text class="detail-info-d">{{info.jd_order_count}}</text>
+					</div>
+					<div class="detail-info-item">
+						<text class="detail-info-t">拼多多订单总数：</text>
+						<text class="detail-info-d">{{info.pdd_order_count}}</text>
+					</div>
+				</scroller>
+			</div>
+		</div>
+	</div>
+</template>
+
+<script>
+	export default {
+		data(){
+			return{
+				info:''
+			}
+		},
+		created(){
+			console.log(uni.getStorageSync('lzd-user'),uni.getStorageSync('user_id'));
+			uni.request({
+				url:`http://39.100.111.131:8088/UserCenter/MyTeamUserDetail?token=${uni.getStorageSync('lzd-user').token}&user_id=${uni.getStorageSync('user_id')}`,
+				success:res=>{
+					let{code,data,msg}=res.data;
+					if(code==2000){
+						this.info=data
+					}else{
+						uni.showToast({
+							title:msg,
+							icon:'none'
+						})
+					}
+				},
+				fail:()=>{
+					uni.showToast({
+						title:'查无此人',
+						icon:'none'
+					})
+				}
+			})
+		}
+	}
+</script>
+
+<style lang="css">
+	.content{
+		flex: 1;
+		background-color: #ff3939;
+		padding: 30upx;
+	}
+	.currency{
+		padding: 20upx;
+		background-color: #FFFFFF;
+		/* margin-bottom: 10upx; */
+		border-radius: 14upx;
+	}
+	.currency-title{
+		
+	}
+	
+	.currency-title-w{
+		font-weight: bold;
+		font-size: 36upx;
+		border-left-color: #E74B45;
+		border-style: solid;
+		border-left-width: 4upx;
+		padding: 0 20upx;
+	}
+	
+	.currency-info{
+		flex-direction: row;
+		align-items: center;
+		margin-top: 24upx;
+	}
+	
+	.currency-info-h{
+		width: 120upx;
+		height: 120upx;
+		border-radius: 120upx;
+		margin-right: 20upx;
+	}
+	
+	.currency-info-top{
+		flex-direction: row;
+		align-items: center;
+		padding-bottom: 10upx;
+	}
+	
+	.currency-info-i{
+		
+	}
+	.currency-info-i-t{
+		font-size: 24upx;
+		lines: 1;
+		text-overflow:ellipsis;
+		max-width:260upx;
+	}
+	.currency-info-i-w{
+		font-size: 30upx;
+		color: #848484;
+	}
+	.user-level{
+		width: 160upx;
+		height: 40upx;
+		margin-left: 20upx;
+	}
+	
+	.detail{
+		margin-top: 34upx;
+		padding: 20upx;
+		border-radius: 14upx;
+		background-color: #FFFFFF;
+		flex: 1;
+	}
+	
+	.detail-title{
+		
+	}
+	
+	.detail-title-w{
+		font-weight: bold;
+		font-size: 36upx;
+		border-left-color: #E74B45;
+		border-style: solid;
+		border-left-width: 4upx;
+		padding: 0 20upx;
+	}
+	
+	.detail-info{
+		margin-top: 14upx;
+		flex: 1;
+	}
+	
+	.scroller{
+		flex: 1;
+	}
+	
+	.detail-info-item{
+		flex-direction: row;
+		align-items: center;
+		padding: 24upx 0;
+	}
+	
+	.detail-info-t{
+		font-size: 32upx;
+		color: #949494;
+	}
+	
+	.detail-info-d{
+		font-size: 32upx;
+		color: #949494;
+	}
+</style>

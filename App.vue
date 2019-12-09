@@ -3,7 +3,8 @@
 	import share from "@/common/shareIndex.js";
 	import jdreg from '@/common/reg.js';
 	import pddreg from '@/common/pdd_reg.js';
-	import notice from '@/common/notice.js';
+	import handelTs from '@/common/notice.js';
+	import setId from '@/common/set_id.js';
 	export default {
 		onUniNViewMessage: function(e) {
 			//监听到nvue页面传入的信息，修改store
@@ -19,6 +20,7 @@
 			// plus.runtime.restart()
 		},
 		onLaunch: function() {
+			
 			//获取上架隐藏开关
 			// if (plus.os.name == 'iOS') {
 			// 	this.$api.GetIosVersion(plus.runtime.versionCode).then((res) => {
@@ -44,7 +46,13 @@
 			// 	})
 			// 	console.log(plus.runtime.versionCode)
 			// }
-			notice();
+			// notice();
+			handelTs(this);
+			
+			if(this.$store.state.user){
+				console.log(this.$store.state.user.token);
+				setId(this.$store.state.user.token)
+			}
 			
 			uni.getNetworkType({
 				success: function(res) {

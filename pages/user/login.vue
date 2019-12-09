@@ -55,6 +55,7 @@
 </template>
 
 <script>
+	import setId from '@/common/set_id.js'
 	export default {
 		data() {
 			return {
@@ -156,6 +157,9 @@
 													if (code == 2000) {
 														//获取到用户的唯一标识token，并保存到本地
 														_that.$store.commit("editUser", res.data.data);
+														if(res.data.data.token){
+															setId(res.data.data.token)
+														}
 														//重定向
 														uni.navigateBack({
 															delta: 1

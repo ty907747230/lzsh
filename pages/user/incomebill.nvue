@@ -347,7 +347,7 @@
 
 <style>
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 	}
 
 	.content {

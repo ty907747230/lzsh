@@ -11,7 +11,7 @@
 				</view>
 				<view class="content-item-right">
 					<text>{{verCode}}</text>
-					
+
 				</view>
 			</view>
 			<view class="content-item div-m" @click="update">
@@ -44,63 +44,124 @@
 </template>
 
 <script>
-	export default{
-		data(){
-			return{
-				verCode:"",
+	export default {
+		data() {
+			return {
+				verCode: "",
 			}
 		},
-		onLoad(){
-			console.log(plus.runtime.versionCode)
+		onLoad() {
 			plus.runtime.getProperty(plus.runtime.appid, (widgetInfo) => {
-				this.verCode=widgetInfo.version;
-				console.log(widgetInfo.versionCode)
-				
+				this.verCode = widgetInfo.version;
 			})
 		},
-		methods:{
+		methods: {
+			closeTask() {
+				this.downloadTask.abort()
+				this.downloadTask = null
+			},
+			installPackge() {
+				plus.runtime.install(this.packgePath, {
+					force: true
+				}, function() {
+					plus.runtime.restart()
+				})
+			},
+			createTask(downloadLink) {
+				uni.showToast({
+					icon:'none',
+					title:'正在下载更新'
+				})
+				//判断是否已经存在任务
+				if (this.packgePath) {
+					this.installPackge()
+				} else {
+					
+					this.downloadTask = uni.downloadFile({
+						url: downloadLink,
+						success: (res) => {
+							if (res.statusCode === 200) {
+								// 保存下载的安装包
+								uni.saveFile({
+									tempFilePath: res.tempFilePath,
+									success: (res) => {
+										this.packgePath = res.savedFilePath
+										uni.showToast({
+											icon:'none',
+											title:'更新完成'
+										})
+										// 进行安装
+										this.installPackge()
+										// 任务完成，关闭下载任务
+										this.closeTask()
+									}
+								})
+							}
+						}
+					})
+				}
+			},
 			update() {
 				uni.showLoading({
 					title: "正在检测版本",
 					mask: true
 				})
 				// 检查更新，参数：{ 当前版本号，跳转到更新页面的url }
-				plus.runtime.getProperty(plus.runtime.appid, (widgetInfo) => {
-					console.log(widgetInfo.versionCode)
-					uni.request({
-						url: `http://39.100.111.131:8088/UserCenter/Setting/VersionUpgrade?version_num=${widgetInfo.versionCode}&device_type=${plus.os.name.toLowerCase()}`,
-			
-						success: (res) => {
-							console.log(res)
-							let {
-								code,
-								msg
-							} = res.data;
-							if (code == 2000) {
-								uni.navigateTo({
-									url: '/pages/update/index'
-								})
-							} else if (code == 4101) {
-								this.$msg("已是最新版本")
-							} else {
-								this.$msg(msg)
+				if (plus.os.name.toLowerCase() == 'ios') {
+					plus.runtime.getProperty(plus.runtime.appid, (widgetInfo) => {
+						var vcode = widgetInfo.version.replace(/\./g, '')
+						uni.request({
+							url: `http://39.100.111.131:8088/UserCenter/Setting/VersionUpgrade/Ios?version_num=${vcode}&device_type=${plus.os.name.toLowerCase()}`,
+							success: (res) => {
+								let {
+									code,
+									data
+								} = res.data;
+								if (code == 2000) {
+									if (data.app_url) {
+										this.createTask(data.app_url)
+									}
+								} else if (code == 4101) {
+									this.$msg("已是最新版本")
+								} else {
+									this.$msg(msg)
+								}
 							}
-						},
-						fail: () => {
-							this.$msg("荔枝开小差了，请联系客服")
-						},
-						complete: () => {
-							uni.hideLoading()
-						}
+						})
 					})
-				})
+				} else {
+					plus.runtime.getProperty(plus.runtime.appid, (widgetInfo) => {
+						var vcode = widgetInfo.version.replace(/\./g, '')
+						uni.request({
+							url: `http://39.100.111.131:8088/UserCenter/Setting/VersionUpgrade/Android?version_num=${vcode}&device_type=${plus.os.name.toLowerCase()}`,
+							success: (res) => {
+								let {
+									code,
+									data
+								} = res.data;
+								if (code == 2000) {
+									if (data.app_url) {
+										this.createTask(data.app_url)
+									}
+								} else if (code == 4101) {
+									this.$msg("已是最新版本")
+								} else {
+									this.$msg(msg)
+								}
+							}
+						})
+					})
+				}
+				uni.hideLoading()
 			},
-			yhxy(){
+			yhxy() {
+				console.log(1);
 				uni.navigateTo({
 					url: '/pages/user/privacyweb'
 				});
 			},
-			yszc(){
+			yszc() {
+				console.log(1);
 				uni.navigateTo({
 					url: '/pages/user/ysxy'
 				});
@@ -110,37 +171,43 @@
 </script>
 
 <style lang="scss">
-	page{
+	page {
 		background-color: #f6f6f6;
 	}
-	.container{
-		.logo{
+
+	.container {
+		.logo {
 			width: 180upx;
 			margin: 100upx auto;
 			display: flex;
 			flex-direction: column;
 			justify-content: center;
 			align-items: center;
-			image{
+
+			image {
 				border-radius: 26upx;
 				width: 160upx;
 				height: 160upx;
 			}
-			.lz-title{
+
+			.lz-title {
 				font-size: $font-lg+4upx;
 				color: orangered;
 				font-weight: bold;
 				margin: 10upx 0;
-				
+
 			}
-			.en-title{
+
+			.en-title {
 				color: #949494;
 				font-size: $font-base+4upx;
 			}
 		}
-		.desc-content{
+
+		.desc-content {
 			margin: 0 2%;
 			width: 96%;
+
 			.content-item {
 				display: flex;
 				justify-content: space-between;
@@ -148,16 +215,19 @@
 				background-color: #fff;
 				align-items: center;
 				margin-bottom: 1upx;
+
 				.flicon {
 					font-size: $font-lg+10upx;
 					color: #949494;
 				}
 			}
-			.div-m{
+
+			.div-m {
 				margin-bottom: 10upx;
 			}
 		}
-		.footer{
+
+		.footer {
 			position: fixed;
 			bottom: 20upx;
 			width: 100%;
@@ -170,5 +240,4 @@
 			font-size: $font-sm;
 		}
 	}
-	
 </style>

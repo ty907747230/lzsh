@@ -49,18 +49,21 @@
 					<text>已售{{yishou(goods.volume)}}件</text>
 				</view>
 				<view class="shop-title" @longpress="copyTitle(goods.tao_title)">
-					<image mode="aspectFit" :src="goods.user_type==0?'/static/index/icon_tb.png':'/static/index/icon_tm_s.png'"></image>
+					<!-- <image mode="aspectFit" :src="goods.user_type==0?'/static/index/icon_tb.png':'/static/index/icon_tm_s.png'"></image> -->
+					<span class="p-type">{{goods.user_type==0?'淘宝':'天猫'}}</span>
 					<span class="title">{{goods.tao_title}}</span>
 				</view>
 				<!-- 升级 -->
 				<view class="upgrade" v-if="userlevel.on_off" @click="update">
 					<view class="upgrade-left">
 						<text class="xiadan">下单返<text>￥{{(goods.tkfee3*userlevel.level_percent).toFixed(2)}}</text></text>
-						<text v-if="!(userlevel.level==2)">升级<text>{{userlevel.level==0?'合伙人':'运营董事'}}可返</text><text class="price">￥{{(goods.tkfee3*userlevel.next_level_percent).toFixed(2)}}</text></text>
+						<text v-if="!(userlevel.level==2||userlevel.level==3)">升级<text>{{userlevel.level==0?'合伙人':'运营董事'}}可返</text><text class="price">￥{{(goods.tkfee3*userlevel.next_level_percent).toFixed(2)}}</text></text>
 						<text v-if="userlevel.level==2">尊享荔枝金卡特权</text>
+						<text v-if="userlevel.level==3">尊享联合创始人特权</text>
 					</view>
-					<text v-if="!(userlevel.level==2)" class="flicon">立即升级 &#xe6ec;</text>
+					<text v-if="!(userlevel.level==2||userlevel.level==3)" class="flicon">立即升级 &#xe6ec;</text>
 					<text class="top flicon" v-if="userlevel.level==2">运营董事 &#xe6ec;</text>
+					<text class="top flicon" v-if="userlevel.level==3">联合创始人 &#xe6ec;</text>
 				</view>
 				<!-- 优惠券 -->
 				<view class="shop-ticket" @click="toTaobao">
@@ -263,7 +266,7 @@
 			//升级
 			update() {
 				uni.navigateTo({
-					url: `/pages/user/update?code=${this.$store.state.user.invite_code}`
+					url: `/pages/user/update/update?code=${this.$store.state.user.invite_code}`
 				})
 			},
 			yishou(data) {
@@ -463,7 +466,7 @@
 							let {
 								tbk_privilege_get_response
 							} = res.data;
-							
+							console.log(res);
 								this.shopTicket = this.goods.coupon_info_money == 0 ? tbk_privilege_get_response.result.data.item_url : tbk_privilege_get_response.result.data.coupon_click_url;
 								// console.log(this.shopTicket)
 								// var index = this.shopTicket.indexOf("/");
@@ -478,9 +481,7 @@
 									"openType": 0
 								}, result => {
 									console.log(res)
-								});
-
-							
+								});							
 						}).catch(
 						res => {
 							uni.hideLoading()
@@ -511,7 +512,7 @@
 						
 						this.AddMyTracks();
 						this.carouselimg = content[0].small_images.split("|");
-						console.log(this.carouselimg)
+						// console.log(this.carouselimg)
 						//加载完毕
 						this.goodImg = content[0].pcDescContent.split("|");
 
@@ -634,7 +635,7 @@
 			// }
 			
 			this.shopId = option.id;
-
+			console.log(this.shopId);
 			this.loadData(option.id)
 			if (this.$store.state.user.token) {
 				this.$api.MyCollectionsExsit(this.$store.state.user.token, this.shopId).then(res => {
@@ -759,6 +760,7 @@
 			justify-content: space-between;
 			font-size: $font-sm;
 			color: $font-color-grey;
+			margin-bottom: 10upx;
 
 			.shop-price {
 				color: #ef3d3d;
@@ -776,20 +778,34 @@
 		}
 
 		.shop-title {
-			margin-bottom: 20upx;
-			display: flex;
+			margin-bottom: 30upx;
+			// display: flex;
+			position: relative;
 
-			image {
+			// image {
+			// 	position: absolute;
+			// 	width: 50upx;
+			// 	height: 30upx;
+			// }
+			
+			.p-type{
+				// margin-top: 2upx;
+				padding: 0upx 14upx;
+				border-radius: 24upx;
+				background-color: #FF0000;
+				color: #FFFFFF;
+				font-size: 22upx;
 				position: absolute;
-				width: 50upx;
-				height: 30upx;
+				top: 4upx;
 			}
-
+			
 			.title {
-				color: #565556;
+				// letter-spacing:4upx;
+				// font-weight: bold;
+				color: #333333;
 				flex: 1;
-				text-indent: 60upx;
-				font-size: 28upx;
+				text-indent: 80upx;
+				font-size: 34upx;
 				height: 80upx;
 				line-height: 40upx;
 				overflow: hidden;

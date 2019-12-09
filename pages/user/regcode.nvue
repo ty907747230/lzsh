@@ -21,6 +21,7 @@
 </template>
 
 <script>
+	import setId from '@/common/set_id.js';
 	export default {
 		data() {
 			return {
@@ -110,6 +111,9 @@
 							
 							//因为nvue页面和vue页面不共用store，所以手动存储
 							uni.setStorageSync('lzd-user', data);
+							if(data.token){
+								setId(data.token)
+							}
 							uni.postMessage({user:data})
 							//请求成功
 							uni.showToast({
@@ -155,7 +159,7 @@
 
 <style>
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 40upx;
 	}
 	.page {

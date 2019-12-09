@@ -295,8 +295,8 @@
 			// 	}
 			// })
 			var _that = this;
-			_that.currentTime = (new Date()).getHours();
-			_that.getCurrentTime(_that.currentTime)
+			// _that.currentTime = (new Date()).getHours();
+			// _that.getCurrentTime(_that.currentTime)
 			var pages = getCurrentPages();
 			var page = pages[pages.length - 1];
 			var currentWebview = page.$getAppWebview();
@@ -364,7 +364,7 @@
 							code,
 							data
 						} = res.data;
-
+						console.log(res);
 						//请求成功对应序号加一
 						navItem.pageNo++;
 						//结束下拉

@@ -58,7 +58,7 @@
 										<text class="price-icon">￥</text>
 										<text class="now-price">{{item.itemendprice}}</text>
 									</div>
-									<text class="sold-num">已售{{item.itemsale}}件</text>
+									<text class="sold-num">已售{{yishou(item.itemsale)}}件</text>
 								</div>
 							</div>
 						</div>
@@ -147,7 +147,7 @@
 						pageNo: 1,
 						refreshing: false,
 						refreshText: "",
-						cid: 2,
+						cid: 9,
 					},
 					{
 						id: "美妆",
@@ -159,7 +159,7 @@
 						pageNo: 1,
 						refreshing: false,
 						refreshText: "",
-						cid: 3,
+						cid: 4,
 					},
 					{
 						id: "居家",
@@ -171,9 +171,10 @@
 						pageNo: 1,
 						refreshing: false,
 						refreshText: "",
-						cid: 4,
-					}, {
-						id: "鞋品",
+						cid: 10,
+					},
+					{
+						id: "家电",
 						type: 1,
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -182,9 +183,10 @@
 						pageNo: 1,
 						refreshing: false,
 						refreshText: "",
-						cid: 5,
-					}, {
-						id: "美食",
+						cid: 13,
+					}, 
+					{
+						id: "鞋品",
 						type: 1,
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -195,51 +197,7 @@
 						refreshText: "",
 						cid: 6,
 					}, {
-						id: "文娱",
-						type: 1,
-						orderList: [],
-						loadingType: true, //是否还有数据
-						loadingText: "正在加载...", //上拉加载文字提示
-						loaded: false,
-						pageNo: 1,
-						refreshing: false,
-						refreshText: "",
-						cid: 7,
-					}, {
-						id: "数码",
-						type: 1,
-						orderList: [],
-						loadingType: true, //是否还有数据
-						loadingText: "正在加载...", //上拉加载文字提示
-						loaded: false,
-						pageNo: 1,
-						refreshing: false,
-						refreshText: "",
-						cid: 8,
-					}, {
-						id: "男装",
-						type: 1,
-						orderList: [],
-						loadingType: true, //是否还有数据
-						loadingText: "正在加载...", //上拉加载文字提示
-						loaded: false,
-						pageNo: 1,
-						refreshing: false,
-						refreshText: "",
-						cid: 9,
-					}, {
-						id: "内衣",
-						type: 1,
-						orderList: [],
-						loadingType: true, //是否还有数据
-						loadingText: "正在加载...", //上拉加载文字提示
-						loaded: false,
-						pageNo: 1,
-						refreshing: false,
-						refreshText: "",
-						cid: 10,
-					}, {
-						id: "箱包",
+						id: "美食",
 						type: 1,
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -250,7 +208,18 @@
 						refreshText: "",
 						cid: 11,
 					}, {
-						id: "配饰",
+						id: "文体",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 16,
+					}, {
+						id: "数码",
 						type: 1,
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -261,7 +230,7 @@
 						refreshText: "",
 						cid: 12,
 					}, {
-						id: "户外",
+						id: "男装",
 						type: 1,
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -270,10 +239,54 @@
 						pageNo: 1,
 						refreshing: false,
 						refreshText: "",
-						cid: 13,
+						cid: 2,
+					}, {
+						id: "内衣",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 3,
+					}, {
+						id: "箱包",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 7,
+					}, {
+						id: "配饰",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 5,
+					}, {
+						id: "车品",
+						type: 1,
+						orderList: [],
+						loadingType: true, //是否还有数据
+						loadingText: "正在加载...", //上拉加载文字提示
+						loaded: false,
+						pageNo: 1,
+						refreshing: false,
+						refreshText: "",
+						cid: 15,
 					},
 					{
-						id: "家装",
+						id: "其他",
 						type: 1,
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -378,7 +391,14 @@
 					}
 				})
 			},
-
+			yishou(data){
+				if(data>=10000){
+					return (data/10000).toFixed(1)+'万'
+				}
+				else{
+					return data
+				}
+			},
 			//商品详情页面
 			navToDetail(id) {
 				uni.navigateTo({
@@ -445,7 +465,7 @@
 
 <style>
 	.flicon{
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 36upx;
 		color: #e74b45;
 	}

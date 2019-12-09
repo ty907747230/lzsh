@@ -1,0 +1,48 @@
+<template>
+	<div class="warp">
+		<div class="apply-btn" @click="update">
+			<text class="apply-btn-w">立即申请</text>
+		</div>
+	</div>
+</template>
+
+<script>
+	export default {
+		methods:{
+			update(){
+				
+				var token=uni.getStorageSync('lzd-user').token
+				console.log(token);
+				uni.request({
+					url:`http://39.100.111.131:8088/UserCenter/UpgradeLevel?token=${token}`,
+					success:res=>{
+						let{code,msg}=res.data
+						uni.showToast({
+							icon:'none',
+							title:msg
+						})
+					}
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+.warp{
+	flex: 1;
+	background-color: #201d1e;
+}
+.apply-btn{
+	width: 600upx;
+	margin:16upx 74px;
+	height: 92upx;
+	background-image: linear-gradient(to right, #C98F41, #E7BE7B);
+	border-radius: 100upx;
+	justify-content: center;
+	align-items: center;
+}
+.apply-btn-w{
+	font-size: 36upx;
+}
+</style>

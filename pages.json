@@ -489,13 +489,28 @@
 				}
 			}
 		},
-		//收藏
+
 		{
-			"path": "pages/user/update",	
+			"path": "pages/user/update/update",	
 			"style": {
-				"navigationStyle":"custom",
+				"navigationBarTitleText":"会员中心",
 				"app-plus": {
-					"bounce": "none"
+					"subNVues":[
+						{
+							"id":"apply",
+							"path":"pages/user/update/apply",
+							
+							"style":{
+								"position":"absolute",
+								"dock":"bottom",
+								"width":"750upx",
+								"height":"120upx",
+								"bottom":"0",
+								"left":"0",
+								"backgroundColor":"#201d1e"
+							}
+						}
+					]
 				}
 			}
 		},
@@ -544,6 +559,15 @@
 				"navigationBarTitleText": "我的团队",
 				"app-plus": {
 					"titleNView": "我的团队",
+					"bounce": "none"
+				}
+			}
+		},
+		{
+			"path": "pages/user/xq/memberinfo",
+			"style": {
+				"navigationBarTitleText": "会员信息",
+				"app-plus": {
 					"bounce": "none"
 				}
 			}
@@ -674,9 +698,22 @@
 				"navigationBarTitleText":"荔枝生活协议"
 			}
 		},
+		{
+			"path": "pages/user/ysxy",
+			
+			"style": {
+				"navigationBarTitleText":"荔枝生活隐私政策"
+			}
+		},
 		//首页扩展网页
 		{
 			"path": "pages/index/kzweb",
+			"style": {
+				"navigationBarTitleText":"荔枝头条"
+			}
+		},
+		{
+			"path":"pages/index/tsweb",
 			"style": {
 				
 			}
@@ -717,6 +754,24 @@
             "path" : "pages/index/newborn/new-zero/new-zero",
             "style" : {
 				"navigationStyle":"custom"
+			}
+        }
+        ,{
+            "path" : "pages/index/newborn/new-zero/zero-web",
+            "style" : {
+				"navigationBarTitleText":"天天0元购",
+				"app-plus": {
+					"bounce":"none",
+					"titleNView": {
+						"buttons":[{
+							"fontSrc":"/static/font/iconfont.ttf",
+							"text":"\ue621",
+							"float":"right",
+							"type":"none",
+							"fontSize":"18px"
+						}]
+					}
+				}
 			}
         }
     ],

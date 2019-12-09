@@ -36,8 +36,11 @@
 					</view>
 					<view class="order-content-content">
 						<view class="creat-data">
-							<text class="creat-data-w">创建日</text>
-							<text>{{items.tb_paid_time}}</text>
+							<text class="creat-data-w">创建日 {{items.tb_paid_time}}</text>
+							<text class="order-status weiquan" v-if="items.tk_status==0">维权</text>
+							<text class="order-status fukuan" v-if="items.tk_status==1">已付款</text>
+							<text class="order-status jiesuan" v-if="items.tk_status==2">已结算</text>
+							<text class="order-status shixiao" v-if="items.tk_status==3">已失效</text>
 						</view>
 						<!-- <view class="">
 							<text>结算日</text>
@@ -309,7 +312,7 @@
 			padding: 0 40upx;
 			display: flex;
 			height: 70upx;
-			margin-top: 150upx;
+			margin-top: 148upx;
 			justify-content: space-between;
 			align-items: center;
 			position: fixed;
@@ -413,7 +416,25 @@
 				.order-content-content {
 					color: #949494;
 					font-size: $font-sm;
-				
+					.order-status{
+						padding: 2upx 16upx;
+						border-radius: 30upx;
+						color: #FFFFFF;
+						margin-left: 20upx;
+						border:1upx solid #FFFFFF;
+					}
+					.weiquan{
+						background-color: #DD5353;
+					}
+					.fukuan{
+						background-color: #0081FF;
+					}
+					.jiesuan{
+						background-color: #44CF85;
+					}
+					.shixiao{
+						background-color: #BCBCBC;
+					}
 					.creat-data {
 						margin-bottom: 6upx;
 						.creat-data-w {

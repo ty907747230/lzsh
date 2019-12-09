@@ -251,7 +251,7 @@
 
 <style>
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 36upx;
 		color: #e74b45;
 	}
@@ -270,7 +270,7 @@
 
 	/* 好券 */
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 36upx;
 		color: #e74b45;
 	}
@@ -335,9 +335,10 @@
 		border-right-width: 0;
 		padding-left: 20px;
 		font-size: 28px;
-
 		border-top-left-radius: 80upx;
 		border-bottom-left-radius: 80upx;
+		border-top-right-radius: 0upx;
+		border-bottom-right-radius: 0upx;
 		placeholder-color: #ccc;
 
 	}

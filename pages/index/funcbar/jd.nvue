@@ -119,7 +119,7 @@
 				refreshText: "下拉可以刷新",
 				tabIndex: 0, //当前的tab栏的索引
 				tabBars: [{
-						val: 1,
+						val: 16,
 						desc: "精选",
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -167,8 +167,8 @@
 						isquest: true,
 					},
 					{
-						val: 12,
-						desc: "生活",
+						val: 10,
+						desc: "专区",
 						orderList: [],
 						loadingType: true, //是否还有数据
 						loadingText: "正在加载...", //上拉加载文字提示
@@ -191,8 +191,8 @@
 						isquest: true,
 					},
 					{
-						val: 11,
-						desc: "潮流",
+						val: 6,
+						desc: "超市",
 						orderList: [],
 						loadingType: true, //是否还有数据
 						loadingText: "正在加载...", //上拉加载文字提示
@@ -234,7 +234,7 @@
 
 		methods: {
 			recylerScroll: function(e) {
-				console.log(1)
+				
 				if (e.contentOffset.y < -200) {
 					this.$set(this.tabBars[this.tabIndex], 'topShow', true)
 				} else {
@@ -317,7 +317,7 @@
 				if (source == "tabChange" && navItem.loaded == true) {
 					return
 				}
-				console.log(1)
+				
 				uni.request({
 					url: 'http://39.100.111.131:8080/jingfen',
 					data: {
@@ -336,7 +336,7 @@
 							status_code,
 							data
 						} = res.data;
-						// console.log(res)
+						console.log(res.data.data.data.length)
 						//如果上一次请求失败,请求数据加 1；
 						if (!navItem.isquest) {
 							navItem.isquest = true;
@@ -352,6 +352,7 @@
 						}
 						//请求成功
 						if (status_code == 200) {
+							
 							let shopList = data.data;
 							// 添加新增数据		
 							navItem.orderList = navItem.orderList.concat(shopList);
@@ -359,7 +360,7 @@
 							navItem.loaded = true;
 
 							//判断是否还有数据
-							navItem.loadingType = shopList.length == this.pageSize ? true : false;
+							shopList.length<=data.total ? true : false;
 						} else {
 							navItem.loadingType = false;
 						}
@@ -442,7 +443,7 @@
 
 <style>
 	.flicon{
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 36upx;
 		color: #e74b45;
 	}
@@ -555,7 +556,7 @@
 
 	/* 好券 */
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 36upx;
 		color: #e74b45;
 	}

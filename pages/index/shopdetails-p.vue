@@ -26,18 +26,21 @@
 					<text>已售{{yishou(goods.sales)}}件</text>
 				</view>
 				<view class="shop-title" @longpress="copyTitle(goods.goods_short_name)">
-					<image mode="aspectFit" src="/static/icons/pdd.jpg"></image>
+					<!-- <image mode="aspectFit" src="/static/icons/pdd.jpg"></image> -->
+					<span class="p-type">拼多多</span>
 					<span class="title">{{goods.goods_short_name}}</span>
 				</view>
 				<!-- 升级 -->
 				<view class="upgrade"  v-if="userlevel.on_off" @click="update">
 					<view class="upgrade-left">
 						<text class="xiadan">下单返<text>￥{{(goods.commission*userlevel.level_percent).toFixed(2)}}</text></text>
-						<text v-if="!(userlevel.level==2)">升级<text>{{userlevel.level==0?'合伙人':'运营董事'}}可返</text><text class="price">￥{{(goods.commission*userlevel.next_level_percent).toFixed(2)}}</text></text>
+						<text v-if="!(userlevel.level==2||userlevel.level==3)">升级<text>{{userlevel.level==0?'合伙人':'运营董事'}}可返</text><text class="price">￥{{(goods.commission*userlevel.next_level_percent).toFixed(2)}}</text></text>
 						<text v-if="userlevel.level==2">尊享荔枝金卡特权</text>
+						<text v-if="userlevel.level==3">尊享联合创始人特权</text>
 					</view>
-					<text v-if="!(userlevel.level==2)" class="flicon">立即升级 &#xe6ec;</text>
+					<text v-if="!(userlevel.level==2||userlevel.level==3)" class="flicon">立即升级 &#xe6ec;</text>
 					<text class="top flicon" v-if="userlevel.level==2">运营董事 &#xe6ec;</text>
+					<text class="top flicon" v-if="userlevel.level==3">联合创始人 &#xe6ec;</text>
 				</view>
 				<!-- 优惠券 -->
 				<view class="shop-ticket" @click="toJD">
@@ -80,7 +83,7 @@
 
 					<view class="action-btn-group">
 
-						<view @click="shareClick(shopId)" class="share">
+						<view @click="sharePdd(goods.goods_desc,goods.price_pg,goods.price_after)" class="share">
 							<!-- <view @click="totbweb" class="share"> -->
 							<text class="flicon">&#xe620;</text>
 							<text>分享</text></view>
@@ -144,6 +147,34 @@
 			seizeSeat
 		},
 		methods: {
+			sharePdd(desc,jdPrice,jdAprice){
+				//转链
+				this.$api.pdd_union_url(this.shopId, this.pdd_id).then(res=>{
+					let{data,status_code}=res.data;
+					console.log(data);
+					if(status_code==200){
+						
+						var str=desc+'\n'+'拼多多价: '+jdPrice+'元\n'+'内购价: '+jdAprice+'元\n'+'入口: '+data.alldata.mobile_short_url;
+						console.log(str);
+						uni.setClipboardData({
+							data:str,
+							success:()=>{
+								uni.showToast({
+									title:'复制导语成功',
+									icon:'none'
+								})
+							}
+						})
+					}else{
+						this.$msg("转链失败，请联系客服")
+					}
+					uni.hideLoading()
+				}).catch(()=>{
+					uni.hideLoading();
+					this.$msg("荔枝开小差了，请联系客服")
+				})
+				
+			},
 			//添加足迹
 			AddMyTracks() {
 				if (!this.$store.state.user.token) {
@@ -514,7 +545,7 @@
 			justify-content: space-between;
 			font-size: $font-sm;
 			color: $font-color-grey;
-
+			margin-bottom: 10upx;
 			.shop-price {
 				color: #ef3d3d;
 				font-size: $font-base;
@@ -531,20 +562,32 @@
 		}
 
 		.shop-title {
-			margin-bottom: 20upx;
-			display: flex;
+			margin-bottom: 30upx;
+			// display: flex;
+			position: relative;
 
 			image {
 				position: absolute;
 				width: 30upx;
 				height: 30upx;
 			}
+			
+			.p-type{
+				padding: 0upx 14upx;
+				border-radius: 24upx;
+				background-color: #FF0000;
+				color: #FFFFFF;
+				font-size: 22upx;
+				position: absolute;
+				top: 4upx;
+			}
 
 			.title {
-				color: #565556;
+				// font-weight: bold;
+				color: #333333;
 				flex: 1;
-				text-indent: 40upx;
-				font-size: 28upx;
+				text-indent: 100upx;
+				font-size: 32upx;
 				height: 80upx;
 				line-height: 40upx;
 				overflow: hidden;

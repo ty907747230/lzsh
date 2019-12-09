@@ -476,7 +476,7 @@ const dom = weex.requireModule('dom')
 
 <style>
 	.flicon{
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 36upx;
 		color: #e74b45;
 	}

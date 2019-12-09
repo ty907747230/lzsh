@@ -147,7 +147,6 @@
 			}
 		},
 		methods: {
-			
 			closeTask() {
 				this.downloadTask.abort()
 				this.downloadTask = null
@@ -161,6 +160,10 @@
 				})
 			},
 			createTask(downloadLink) {
+				uni.showToast({
+					icon:'none',
+					title:'正在下载更新'
+				})
 				//判断是否已经存在任务
 				if (this.packgePath) {
 					this.installPackge()
@@ -175,6 +178,10 @@
 									tempFilePath: res.tempFilePath,
 									success: (res) => {
 										this.packgePath = res.savedFilePath
+										uni.showToast({
+											icon:'none',
+											title:'更新完成'
+										})
 										// 进行安装
 										this.installPackge()
 										// 任务完成，关闭下载任务
@@ -237,14 +244,14 @@
 					}
 
 				} else {
-					uni.clearStorageSync()
-					// plus.cache.clear(function() {
-					// 	uni.showToast({
-					// 		title: '缓存清理完成',
-					// 		duration: 2000
-					// 	});
-					// 	// _that.getCache()
-					// });
+					// uni.clearStorageSync()
+					plus.cache.clear(function() {
+						uni.showToast({
+							title: '缓存清理完成',
+							duration: 2000
+						});
+						_that.getCache()
+					});
 					uni.showToast({
 						title: '缓存清理完成',
 						duration: 2000,
@@ -310,9 +317,10 @@
 				var _that = this;
 				uni.chooseImage({
 					count: 1, //默认9
-					sizeType: ['original', 'compressed'], //可以指定是原图还是压缩图，默认二者都有
+					sizeType: ['compressed'], //可以指定是原图还是压缩图，默认二者都有
 					sourceType: ['album'],
 					success: function(res) {
+						console.log(res.tempFiles);
 						uni.showLoading({
 							title: "正在上传",
 							mask: true
@@ -327,14 +335,17 @@
 								'user': _that.info.base_info.invite_code,
 							},
 							success: (uploadFileRes) => {
+								console.log(uploadFileRes);
 								uni.hideLoading();
-								if (uploadFileRes.statusCode == 200) {
+								if (uploadFileRes.data != '2001') {
 									_that.info.base_info.headimgurl = uploadFileRes.data;
 									console.log(_that.info);
 									uni.showToast({
 										title: '上传suceess',
 										icon: "none"
 									});
+								}else{
+									_that.$msg('图片过大')
 								}
 							},
 							fail: () => {
@@ -454,7 +465,8 @@
 									plug.logout({}, result => {
 										console.log(result);
 									});
-									this.$msg("找不到授权渠道id，请联系客服")
+									// this.$msg("找不到授权渠道id，请联系客服")
+									this.$msg("淘宝号违规或者异常，请联系客服")
 								}
 							},
 							fail: () => {

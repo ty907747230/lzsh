@@ -21,9 +21,7 @@
 						<view class="head-content" v-if="isLogin">
 							<view class="head-mingzi">
 								<view class="username">{{userInfo.base_info.user_name}}</view>
-								<!-- <image v-if="userInfo.base_info.level==3" class="user-level" :src="userInfo.base_info.head_icon" mode="widthFix"></image>
-								<image v-if="userInfo.base_info.level==2" class="user-level" src="/static/huiyuan/level-3.png" mode="widthFix"></image>
-								<image v-if="userInfo.base_info.level==1" class="user-level" src="/static/huiyuan/level-2.png" mode="widthFix"></image> -->
+								
 								<image  class="user-level" :src="userInfo.base_info.head_icon" mode="widthFix"></image>
 							</view>
 							<view class="code">
@@ -39,6 +37,9 @@
 					</view>
 				</view>
 				<view class="huiyuan-tab-div">
+					<!-- <view class="huiyuan-tab">
+						<text>累计收益：</text>
+					</view> -->
 					<image @click="goLogin" v-if="!userInfo.base_info" src="/static/huiyuan/huiyuan-login.png" mode="widthFix" class="huiyuan-tab"></image>
 					<image @click="update" v-if="userInfo.base_info.level==0" class="huiyuan-tab" src="/static/huiyuan/huiyuan-1.png"
 					 mode="widthFix"></image>
@@ -46,6 +47,8 @@
 					 mode="widthFix"></image>
 					<image @click="update" v-if="userInfo.base_info.level==2" class="huiyuan-tab" src="/static/huiyuan/huiyuan-3.png"
 					 mode="widthFix"></image>
+					 <image @click="update" v-if="userInfo.base_info.level==3" class="huiyuan-tab" src="/static/huiyuan/huiyuan-4.png"
+					  mode="widthFix"></image>
 				</view>
 
 			</view>
@@ -55,7 +58,7 @@
 				<!-- 余额 -->
 				<view class="balance">
 					<view class="left">
-						<text>余额(元)<text class="num">{{userInfo.base_info.remain_money||0}}</text>
+						<text class="left-w">余额(元)<text class="num">{{userInfo.base_info.remain_money||0}}</text>
 						</text>
 					</view>
 					<text @click="tixian" class="tx-btn">提 现</text>
@@ -63,7 +66,7 @@
 
 				<!-- 收益 -->
 				<view class="profitList">
-					<view class="profit-item" :key="index" @click="navTo('/pages/user/incomebill')">
+					<view class="profit-item" :key="index" @click="navTo('/pages/user/xq/earnreport')">
 						<view class="profit-item-top">
 							<text class="profit-price">{{gain_money.gain_today||0}}</text>
 						</view>
@@ -71,15 +74,7 @@
 							<text>今日收益</text>
 						</view>
 					</view>
-					<view class="profit-item" :key="index" @click="navTo('/pages/user/incomebill')">
-						<view class="profit-item-top">
-							<text class="profit-price">{{gain_money.gain_yesterday||0}}</text>
-						</view>
-						<view class="profit-item-bottom">
-							<text>昨日预估</text>
-						</view>
-					</view>
-					<view class="profit-item" :key="index" @click="navTo('/pages/user/incomebill')">
+					<view class="profit-item" :key="index" @click="navTo('/pages/user/xq/earnreport')">
 						<view class="profit-item-top">
 							<text class="profit-price">{{gain_money.gain_this_month||0}}</text>
 						</view>
@@ -87,12 +82,20 @@
 							<text>本月预估</text>
 						</view>
 					</view>
-					<view class="profit-item" :key="index" @click="navTo('/pages/user/incomebill')">
+					<view class="profit-item" :key="index" @click="navTo('/pages/user/xq/earnreport')">
 						<view class="profit-item-top">
 							<text class="profit-price">{{gain_money.gain_last_month||0}}</text>
 						</view>
 						<view class="profit-item-bottom">
-							<text>上月结算</text>
+							<text>上月预估</text>
+						</view>
+					</view>
+					<view class="profit-item" :key="index" @click="navTo('/pages/user/xq/earnreport')">
+						<view class="profit-item-top">
+							<text class="profit-price">{{userInfo.base_info.gain_all||0}}</text>
+						</view>
+						<view class="profit-item-bottom">
+							<text>累计收益</text>
 						</view>
 					</view>
 				</view>
@@ -426,6 +429,9 @@
 			//封装跳转方法
 			navTo(url) {
 				if (!this.isLogin) {
+					uni.navigateTo({
+						url: '/pages/user/login',
+					});
 					this.$msg("请先登录");
 				} else {
 					uni.navigateTo({
@@ -435,7 +441,7 @@
 			},
 			//升级
 			update() {
-				this.navTo(`/pages/user/update?code=${this.userInfo.base_info.invite_code}`)
+				this.navTo(`/pages/user/update/update?code=${this.userInfo.base_info.invite_code}`)
 			},
 			//跳转登录
 			goLogin() {
@@ -473,7 +479,7 @@
 								this.isshow = false
 							}
 						}
-						// console.log(this.$store.state.userpersonal)
+						
 						console.log(this.userInfo.base_info.headimgurl)
 					} else {
 						uni.stopPullDownRefresh();
@@ -564,17 +570,21 @@
 		.header {
 			width: 100%;
 			background-color: #ff3939;
-			height: 400upx;
+			// height: 400upx;
 
 			.huiyuan-tab-div {
 				padding: 0 20upx;
 			}
 
 			.huiyuan-tab {
-				height: 150upx;
-				// box-shadow: 8upx 8upx 30upx #9d9c9d;
+				// background-color: #000000;
+				height: 96upx;
+				display: flex;
+				justify-content: center;
+				font-size: 36upx;
+				color: #FAE904;
+				border-radius: 10upx 10upx 0 0;
 				width: 100%;
-				box-sizing: border-box;
 			}
 
 			.header-content {
@@ -585,7 +595,9 @@
 
 				.left {
 					display: flex;
-
+					.left-w{
+						color: #FAE904;
+					}
 					.uer-name {
 						padding: 20upx;
 						height: 100upx;
@@ -686,7 +698,7 @@
 		// 余额
 		.balance {
 			// box-shadow: 8upx 8upx 30upx #9d9c9d;
-			height: 100upx;
+			height: 96upx;
 			display: flex;
 			justify-content: space-between;
 			background-color: #fff;
@@ -714,13 +726,12 @@
 
 			.tx-btn {
 				font-size: 30upx;
-
-				height: 70upx;
-				width: 150upx;
+				height: 60upx;
+				width: 130upx;
 				border-radius: 60upx;
 				background-color: #fee7b6;
 				text-align: center;
-				line-height: 70upx;
+				line-height: 60upx;
 			}
 		}
 

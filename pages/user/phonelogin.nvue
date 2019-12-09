@@ -182,7 +182,7 @@
 
 <style>
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 	}
 	.page {
 		position: absolute;

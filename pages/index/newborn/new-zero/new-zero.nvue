@@ -83,7 +83,7 @@
 </template>
 
 <script>
-	const plug = uni.requireNativePlugin('Html5app-Baichuan');
+	// const plug = uni.requireNativePlugin('Html5app-Baichuan');
 	export default {
 		data() {
 			return {
@@ -113,14 +113,41 @@
 							msg
 						} = res.data
 						if(code==200){
-							 plug.openCoupon({"url":coupon_url,"openType":1},ret=>{
-							console.log(ret)
-							        });
+							console.log(coupon_url)
+							var index = coupon_url.indexOf("/");
+							
+							var url = "taobao:" + coupon_url.substring(index);
+							console.log(url)
+							plus.runtime.openURL(url, function(res) {
+								console.log('打开失败');
+								uni.showModal({
+									content: "本机未检测到淘宝客户端，是否打开浏览器访问淘宝？",
+									success: function(res) {
+										//用户点击确定
+										if (res.confirm) {
+							
+											plus.runtime.openURL(coupon_url, function(res) {
+												console.log(res);
+											})
+										}
+									}
+								})
+							});
+							
+							//  plug.openCoupon({"url":coupon_url,"openType":1},ret=>{
+							// console.log(ret)
+							//         });
+							
 						}
 						if(code==203){
 							uni.showToast({
 								icon:'none',
 								title:msg
+							})
+						}else{
+							uni.showToast({
+								icon:'none',
+								title:'联系客服'
 							})
 						}
 					}
@@ -147,7 +174,7 @@
 						this.shopList=data[0];
 						this.textList=join_conditions.replace(/n/g,'')
 						this.textList.replace(/;/g,'1')
-						this.textList='\n1、活动页的新人首单商品新用户只能购买一次；\n2、红包只能领取一次，领取该商品红包后请尽快使用，若因该商品已被抢完仍未使用红包的，则该红包失效，不可再次领取其它商品红包；\n3、红包的有效时间是自领取开始到当天的24点；\n4、红包仅限指定商品使用，红包下单直减，在粉象APP上无销售订单、无返佣\n5、领取的红包可在【手机淘宝】- 我的淘宝 - 红包卡券查询\n6、部分活动商品青海，甘肃，宁夏，内蒙，新疆、西藏等偏远地区不包邮'
+						this.textList='\n1、活动页的新人首单商品新用户只能购买一次；\n2、红包只能领取一次，领取该商品红包后请尽快使用，若因该商品已被抢完仍未使用红包的，则该红包失效，不可再次领取其它商品红包；\n3、红包的有效时间是自领取开始到当天的24点；\n4、红包仅限指定商品使用，红包下单直减，在荔枝APP上无销售订单、无返佣\n5、领取的红包可在【手机淘宝】- 我的淘宝 - 红包卡券查询\n6、部分活动商品青海，甘肃，宁夏，内蒙，新疆、西藏等偏远地区不包邮'
 						console.log(this.textList)
 					}
 				})
@@ -187,7 +214,7 @@
 	}
 	
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 50upx;
 		color: #FFFFFF;
 	}

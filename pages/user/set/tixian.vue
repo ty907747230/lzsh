@@ -70,20 +70,42 @@
 				this.num = ""
 			},
 			tixian() { 
-				this.$api.CashOut(this.$store.state.user.token, this.num,  this.info.alipay,this.info.alipay_name).then(res => {
-					console.log(res)
-					let {code,msg,data}=res.data;
-					if(code==2000){
-						this.$store.state.userpersonal.base_info.remain_money=data.remain_money;
-						console.log(data.remain_money)
-						uni.navigateBack({
-							delta: 1
-						});
+				uni.showLoading({
+					mask:true
+				});
+				console.log(this.timeId);
+				if(this.timeId){
+					return
+				}
+			var _that=this;
+			_that.timeId=setTimeout(function(){
+					_that.$api.CashOut(_that.$store.state.user.token, _that.num,  _that.info.alipay,_that.info.alipay_name).then(res => {
+						console.log(res)
+						let {code,msg,data}=res.data;
+						if(code==2000){
+							_that.$store.state.userpersonal.base_info.remain_money=data.remain_money;
+							console.log(data.remain_money)
+							uni.navigateBack({
+								delta: 1
+							});
+						}
+						_that.$msg(msg)
+						uni.hideLoading()
+					}).catch((e) => {
+						if(e.statusCode==429){
+							_that.$msg("点击过于频繁")
+							return
+						}
+						_that.$msg("荔枝开小差了，请联系客服")
+						uni.hideLoading()
+					})
+					
+					if(_that.timeId){
+						clearTimeout(_that.timeId)
+						_that.timeId='';
+						console.log(_that.timeId);
 					}
-					this.$msg(msg)
-				}).catch(() => {
-					this.$msg("荔枝开小差了，请联系客服")
-				})
+				},500)	
 			}
 		}
 	}

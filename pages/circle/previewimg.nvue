@@ -6,7 +6,7 @@
 			</div>
 		</slider>
 		<div class="download" @click="download">
-			<text class="flicon ">&#xe647;</text>
+			<text class="save-img ">保存相册</text>
 		</div>
 	</div>
 </template>
@@ -131,6 +131,7 @@
 </script>
 
 <style scoped>
+	
 	.wrapper{
 		background-color: #000000;
 	}
@@ -156,7 +157,7 @@
 	.download {
 		position: fixed;
 		bottom: 70upx;
-		right: 30upx;
+		right: 50upx;
 		border-radius: 14upx;
 		background-color: #000000;
 		flex-direction: row;
@@ -165,9 +166,17 @@
 		align-items: center;
 		justify-content: center;
 	}
+	
+	.save-img{
+		padding: 12rpx 20rpx 6rpx;
+		background-color: #201D1E;
+		color: #FFFFFF;
+		font-size: 30upx;
+		border-radius: 10rpx;
+	}
 
 	.flicon {
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 60upx;
 		color: #FFFFFF;
 	}

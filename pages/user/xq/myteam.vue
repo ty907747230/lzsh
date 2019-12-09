@@ -17,7 +17,7 @@
 						<image v-if="info.level==2" class="user-level" src="/static/huiyuan/level-3.png" mode="widthFix"></image>
 						<image v-if="info.level==1" class="user-level" src="/static/huiyuan/level-2.png" mode="widthFix"></image>
 						<image v-if="info.level==0" class="user-level" src="/static/huiyuan/level-1.png" mode="widthFix"></image>
-						
+						<image v-if="info.level==3" class="user-level" src="/static/huiyuan/three_level.png" mode="widthFix"></image>
 						
 					</view>
 					<text v-if="info.wechat_num" @click="copyName(info.wechat_num)" class="phone">微信号: {{info.wechat_num}}</text>
@@ -42,7 +42,7 @@
 				</view>
 				<view class="myteam-content-content" v-if="index==currentItem" v-for="(item,index) in navlist" :key="index">
 					<scroll-view scroll-y class="list-scroll-content" @scrolltolower="loadData">
-						<view class="contenlist-item" v-for="(items,indexs) in navlist[currentItem].orderList" :key="indexs">
+						<view class="contenlist-item" v-for="(items,indexs) in navlist[currentItem].orderList" :key="indexs"  @click="navtoInfo(items.id)">
 							<image :src="items.headimgurl" mode="widthFix"></image>
 							<text>{{items.name}}</text>
 							<text>{{items.ctime}}</text>
@@ -106,6 +106,13 @@
 			this.loadData("refresh");
 		},
 		methods: {
+			navtoInfo(id){
+				console.log(id);
+				uni.setStorageSync('user_id',id);
+				uni.navigateTo({
+					url:'/pages/user/xq/memberinfo'
+				})
+			},
 			//复制名字
 			copyName(data){
 				uni.setClipboardData({
@@ -166,7 +173,7 @@
 						this.info = data.invite_me;
 						// 添加新增数据		
 						navItem.orderList = navItem.orderList.concat(shopList);
-						console.log(navItem.orderList)
+						console.log(navItem.orderList[0])
 						//请求成功序号增加,并且修改对应得加载状态
 						navItem.loaded = true;
 
@@ -355,7 +362,9 @@
 					align-items: center;
 
 					image {
-						height: 80upx;
+						// display: inline-block;
+						max-height: 80upx;
+						min-height: 80upx;
 						width: 80upx;
 						border-radius: 80upx;
 						overflow: hidden;

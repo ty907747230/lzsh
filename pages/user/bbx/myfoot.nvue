@@ -239,7 +239,7 @@
 		height: 30upx;
 	}
 	.flicon{
-		font-family: flicon;
+		font-family: nflicon;
 		font-size: 28upx;
 	}
 	.tui-refresh {

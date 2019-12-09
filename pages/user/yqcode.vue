@@ -24,6 +24,7 @@
 </template>
 
 <script>
+	import setId from '@/common/set_id.js';
 	export default {
 		data() {
 			return {
@@ -75,45 +76,62 @@
 				})
 			},
 			tijiao() {
-				console.log(1);
 				uni.showLoading({
 					mask:true
 				});
-				console.log(this.phone);
-				console.log(this.union_id)
-				//提交邀请码以及用户信息到数据库
-				this.$api.getInviteCode(this.phone, this.union_id,this.formdata,"",this.wxInfo).then(res =>{
-						uni.hideLoading()
-						console.log(this.phone,this.union_id, this.formdata,this.wxInfo)
-						console.log(res)
-						let {code,msg,data}=res.data;
-						// this.$msg(msg);
-						if(code==2000){
-								//请求成功保存token
-								this.$store.commit("editUser",data);
-							//微信登录
-							if(this.wxInfo){
-								//重定向到个人中心呢
-								uni.navigateBack({
-									delta: 2
-								});
+				console.log(this.timeId);
+				if(this.timeId){
+					return
+				}
+				
+				var _that=this;
+				
+			_that.timeId=setTimeout(function(){
+					//提交邀请码以及用户信息到数据库
+					_that.$api.getInviteCode(_that.phone, _that.union_id,_that.formdata,"",_that.wxInfo).then(res =>{
+							uni.hideLoading()
+							
+							console.log(res)
+							let {code,msg,data}=res.data;
+							// this.$msg(msg);
+							if(code==2000){
+									//请求成功保存token
+									_that.$store.commit("editUser",data);
+									if(data.token){
+										setId(data.token)
+									}
+								//微信登录
+								if(_that.wxInfo){
+									//重定向到个人中心呢
+									uni.navigateBack({
+										delta: 2
+									});
+								}
+								//手机登录
+								else{
+									uni.navigateBack({
+										delta: 4
+									});
+								}  
+								uni.hideKeyboard();
 							}
-							//手机登录
-							else{
-								uni.navigateBack({
-									delta: 4
-								});
-							}  
-							uni.hideKeyboard()
 						}
-					}
-				).catch(()=>{
-					uni.showToast({
-						title:"你的网路开小差了",
-						icon:"none"
+					).catch((e)=>{
+						console.log(e);
+						uni.showToast({
+							title:"你的网络开小差了",
+							icon:"none"
+						})
+						uni.hideLoading();
 					})
-					uni.hideLoading();
-				})
+					
+					if(_that.timeId){
+						clearTimeout(_that.timeId)
+						_that.timeId='';
+						console.log(_that.timeId);
+					}
+				},1000)
+				
 			}
 		},
 		onLoad(option) {

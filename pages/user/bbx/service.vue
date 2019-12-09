@@ -6,11 +6,11 @@
 		<view class="kefu-list" v-for="(item,index) in cusList" :key=index>
 			<view class="kefu-list-item">
 				<text class="kefu-mz">{{item.val}}</text>
-				<view class="img-content" @longpress="saveImg(item.url)">
+				<view class="img-content" @click="saveImg(item.url)">
 					<image :src="item.url" mode="widthFix"></image>
-					<text class="imgTips">长按保存微信二维码</text>
+					<text class="imgTips">点击保存微信二维码</text>
 				</view>
-				<view class="wxCode">
+				<view class="wxCode"> 
 					微信号:{{item.code}}
 				</view>
 				<text class="copy-btn" @click="copyCode(item.code)">复制微信号添加好友</text>
@@ -26,7 +26,7 @@
 			return {
 				cusList: [{
 						val: "官方客服",
-						code: "xiaomage309350242",
+						code: "lzsh-kefu",
 						url: '/static/custom/cus.jpg'
 					}
 				]
@@ -91,16 +91,19 @@
 </script>
 
 <style lang="scss">
-	page {}
-
+	
+	page{
+		background-image: linear-gradient(to bottom, #9359ff, #dc3e91);
+	}
 	.container {
+		
 		.qun{
 			text-align: center;
 			font-size: $font-base;
 		}
-		height: 3300upx;
+		
 		padding-top: 20upx;
-		background-image: linear-gradient(to bottom, #9359ff, #dc3e91);
+		
 
 		.kefu-list {
 			width: 70%;
