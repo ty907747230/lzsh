@@ -19,6 +19,16 @@
 				}
 			}
 		},
+		
+		{
+			"path": "pages/index/swiper/other",
+			"style": {
+				"navigationBarTitleText": "好货",
+				"app-plus": {
+					"bounce":"none"
+				}
+			}
+		},
 
 		// 商品详情
 		{

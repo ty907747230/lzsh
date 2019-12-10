@@ -189,7 +189,7 @@
 		},
 		methods: {
 			copyTkl() {
-				if(!this.tkl){
+				if (!this.tkl) {
 					uni.showToast({
 						icon: "none",
 						title: "口令正在生成，请稍后重试"
@@ -295,23 +295,23 @@
 				shareObj.scene = "WXSceneSession";
 				shareObj.type = 2;
 				shareObj.imageUrl = this.qrCodeImg;
-				shareObj.fail=function(e){
+				shareObj.fail = function(e) {
 					console.log(e);
 				}
-				shareObj.complete=function(e){
+				shareObj.complete = function(e) {
 					console.log(e);
 				}
-				shareObj.success=function(e){
+				shareObj.success = function(e) {
 					console.log(e);
 				}
 				uni.share(shareObj);
 			},
 			//下载图片
 			downImg() {
-				if(!this.tkl){
+				if (!this.qrCodeImg) {
 					uni.showToast({
 						icon: "none",
-						title: "口令正在生成，请稍后重试"
+						title: "图片正在生成，请稍后重试"
 					})
 					return
 				}
@@ -532,6 +532,7 @@
 		},
 		onLoad(options) {
 			this.num = options.num;
+			this.pic_url = options.pic_url;
 			//请求商品详情
 			this.$api.getDetailCommon(options.id).then(res => {
 				let {
@@ -571,7 +572,20 @@
 				if (code == 200) {
 					this.tkl = result.data.tpwd;
 					console.log(this.tkl);
-					this.comment = `【下单链接】${this.shopItem.item_url}\n【邀请码】${this.$store.state.user.invite_code}\n【淘口令】(${this.tkl})`;
+					this.comment =
+						`【下单链接】正在生成...\n【邀请码】${this.$store.state.user.invite_code}\n【淘口令】(${this.tkl})`;
+					if (this.tkl) {
+						this.$api.HandleLink({
+							tkl: this.tkl,
+							pic: this.pic_url
+						}).then(rest => {
+							this.comment =
+								`【下单链接】${rest.data.buy_url}\n【邀请码】${this.$store.state.user.invite_code}\n【淘口令】(${this.tkl})`;
+						}).catch(() => {
+							this.comment =
+								`【下单链接】无\n【邀请码】${this.$store.state.user.invite_code}\n【淘口令】(${this.tkl})`;
+						})
+					}
 				}
 			});
 

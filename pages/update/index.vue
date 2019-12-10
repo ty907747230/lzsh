@@ -152,10 +152,9 @@
 				this.latest = null
 				
 				plus.runtime.getProperty(plus.runtime.appid, (widgetInfo) => {
-					console.log(widgetInfo.versionCode)
-					console.log(plus.os.name.toLowerCase())
+					var vcode = widgetInfo.version.replace(/\./g, '')
 					uni.request({
-						url: `http://39.100.111.131:8088/UserCenter/Setting/VersionUpgrade?version_num=${widgetInfo.versionCode}&device_type=${plus.os.name.toLowerCase()}`,
+						url: `http://39.100.111.131:8088/UserCenter/Setting/VersionUpgrade/Android?version_num=${vcode}&device_type=${plus.os.name.toLowerCase()}`,
 						method: 'GET',
 						success: (res) => {
 							let {

@@ -150,7 +150,7 @@
 			closeTask() {
 				this.downloadTask.abort()
 				this.downloadTask = null
-			
+
 			},
 			installPackge() {
 				plus.runtime.install(this.packgePath, {
@@ -161,14 +161,14 @@
 			},
 			createTask(downloadLink) {
 				uni.showToast({
-					icon:'none',
-					title:'正在下载更新'
+					icon: 'none',
+					title: '正在下载更新'
 				})
 				//判断是否已经存在任务
 				if (this.packgePath) {
 					this.installPackge()
 				} else {
-					
+
 					this.downloadTask = uni.downloadFile({
 						url: downloadLink,
 						success: (res) => {
@@ -179,8 +179,8 @@
 									success: (res) => {
 										this.packgePath = res.savedFilePath
 										uni.showToast({
-											icon:'none',
-											title:'更新完成'
+											icon: 'none',
+											title: '更新完成'
 										})
 										// 进行安装
 										this.installPackge()
@@ -298,9 +298,12 @@
 									data
 								} = res.data;
 								if (code == 2000) {
-									if (data.app_url) {
-										this.createTask(data.app_url)
-									}
+									// if (data.app_url) {
+									// 	this.createTask(data.app_url)
+									// }
+									uni.navigateTo({
+										url: '/pages/update/index'
+									})
 								} else if (code == 4101) {
 									this.$msg("已是最新版本")
 								} else {
@@ -344,7 +347,7 @@
 										title: '上传suceess',
 										icon: "none"
 									});
-								}else{
+								} else {
 									_that.$msg('图片过大')
 								}
 							},
@@ -690,6 +693,7 @@
 						overflow: hidden;
 						position: relative;
 						z-index: 1;
+
 						// overflow: hidden;
 						image {
 							width: 70upx;

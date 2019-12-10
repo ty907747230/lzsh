@@ -6,7 +6,7 @@
 			<div class="page-header-wrapper" @click="toSearch">
 				<div class="page-header-center">
 					<text class="flicon fangda">&#xe678;</text>
-					<text class="search-input">输入关键字搜索</text>
+					<text class="search-input">输入商品名或粘贴宝贝标题搜索</text>
 				</div>
 				<div class="page-header-right">
 					<text class="flicon xiaoxi">&#xe6c4;</text>
@@ -33,8 +33,8 @@
 					<cell v-if="index1==0">
 						<div class="tui-slider-box">
 							<slider class="tui-slider" interval="5000" auto-play="true" show-indicators="true">
-								<div @click="toSwiper(items.page)" class="tui-frame" :key="indexs" v-for="(items,indexs) in swiperList">
-									<image class="tui-slider-img" :class="[isIos?'':'tui-img-radius']" resize="cover" :src="items.url"></image>
+								<div class="tui-frame" :key="indexs" v-for="(items,indexs) in swiperList">
+									<image  @click="toSwiper(items.link,items.title)" class="tui-slider-img" :class="[isIos?'':'tui-img-radius']"  :src="items.url"></image>
 								</div>
 								<indicator class="tui-indicator"></indicator>
 							</slider>
@@ -111,10 +111,10 @@
 
 						<!-- 商品列表组件-->
 						<!-- 商品列表 -->
-						<div class="shop-list" @click="navToDetail(item.item_id)">
+						<div class="shop-list" @click="navToDetail(item.tao_id)">
 							<!-- 图片 -->
 							<div class="shop-pictrue">
-								<image lazy-load="true" class="big-pict" mode="widthFix" :src="'https:'+item.pict_url+'_300x300.jpg'"></image>
+								<image class="big-pict" mode="widthFix" :src="item.white_image"></image>
 							</div>
 							<!-- 右侧内容 -->
 							<div class="shop-content">
@@ -127,16 +127,16 @@
 
 								<!-- 赚 -->
 								<div class="earn">
-									<text v-if="userlevel.on_off" class="primary">奖: {{((item.zk_final_price - item.coupon_amount)* item.commission_rate *0.01*userlevel.level_percent).toFixed(2)}}</text>
+									<text v-if="userlevel.on_off" class="primary">奖: {{(item.tkfee3*userlevel.level_percent).toFixed(2)}}</text>
 								</div>
 
 								<!-- 价格 -->
 								<div class="shop-price">
-									<text class="ago-price">原价:￥{{item.zk_final_price}}</text>
+									<text class="ago-price">原价:￥{{item.size}}</text>
 									<div class="quan">
 										<image src="/static/index/quanzi.png" mode="" class="quan-img">
 										</image>
-										<text class="quan-price"> ￥{{item.coupon_amount}}</text>
+										<text class="quan-price"> ￥{{item.coupon_info_money}}</text>
 									</div>
 
 								</div>
@@ -145,7 +145,7 @@
 								<div class="progress-box">
 									<div class="box-left">
 										<text class="price-icon">￥</text>
-										<text class="now-price">{{accSubtr(+item.zk_final_price,+item.coupon_amount)}}</text>
+										<text class="now-price">{{item.quanhou_jiage}}</text>
 									</div>
 									<text class="sold-num">已售{{yishou(item.volume)}}件</text>
 								</div>
@@ -169,7 +169,6 @@
 
 <script>
 	import uniTabBar from '@/components/tab-nvue/tabbar-i.nvue'
-
 	const dom = weex.requireModule('dom')
 	const animation = weex.requireModule('animation')
 
@@ -245,22 +244,28 @@
 
 				],
 				swiperList: [{
-						id: 0,
 						type: 'image',
-						url: '/static/index/jc.jpg',
-						page: '/pages/index/swiper/jc'
+						url: '/static/index/ms.jpg',
+						link:'https://huodong.taobao.com/wow/a/act/tao/tmc/24519/wupr?wh_pid=industry-177103&ptl=from:tbkapi&ali_trackid=2:mm_736190100_1133100220_109822950097:1575872342_178_138572215&pvid=23116944&ak=23116944',
+						title:'美食生鲜'
 					},
 					{
-						id: 0,
 						type: 'image',
-						url: '/static/index/9.9.jpeg',
-						page: '/pages/index/funcbar/nine-nine'
+						url: '/static/index/bb.jpg',
+						link:'https://huodong.taobao.com/wow/a/act/tao/tmc/24519/wupr?wh_pid=main-177305&wh_alimama=true&ptl=from:tbkapi&es=dBcwZ3amaz5F0Vw9m5i33KYZnsJ0othnyHzvsCdljqEOfN60HfmuyUVSHFZhZgH7onv6QcvcARY%3D&ali_trackid=2:mm_736190100_1133100220_109822950097:1575872372_139_642356994&pvid=23116944&ak=23116944&e=kJ5sy0LslCU4kVDdsVUeBnXrDvFw_HbDzAEgCXNrvffYgv019zNeJf1SarTXhIOTlMqVS29KK4JIMmQ85Iwp-b_45R2PZRigijG1iGo0VHhLqWo-cVj6V2hHj2HcrAmBoVWH08c_TvfO6kNFQnXpK2Ygy788Q6KvgOaxb8cjhfWjn2BtMQkSctI4iXeMVN0VphDCF5dH9nFnI417ez6pgcvBfpBAMEs_IbXb9U3f9qMzGL4mfhMu4UbT1QOUV4cm1OL5Nwg-hH51OLPcYUw9-LknblWTFn5gmPEG0cDmIAymmOsqDXT6hN2m86mrrmpyyM2Vy6MVyJpYEyk7-1KwGxiJmxTgHtWeMQfc7uKPdgLOJRM5Lctvtk3etiyKgMVl&type=2&tk_cps_param=736190100&tkFlag=1&tk_cps_ut=1',
+						title:'人民的宝贝'
 					},
 					{
-						id: 0,
 						type: 'image',
-						url: '/static/index/ph.jpeg',
-						page: '/pages/index/funcbar/tblist'
+						url: '/static/index/fs.jpg',
+						link:'https://huodong.taobao.com/wow/a/act/tao/tmc/24519/wupr?wh_pid=industry-177110&ptl=from:tbkapi&ali_trackid=2:mm_736190100_1133100220_109822950097:1575872406_151_888832883&pvid=23116944&ak=23116944&e=DGCCgcZsrDg4kVDdsVUeBnXrDvFw_HbDzAEgCXNrvffYgv019zNeJf1SarTXhIOTlMqVS29KK4JIMmQ85Iwp-TL9rbwp_nXw1W0GoAtkCKmhzuDqViVlmGhHj2HcrAmBoVWH08c_TvfO6kNFQnXpK2Ygy788Q6KvgOaxb8cjhfWjn2BtMQkSctI4iXeMVN0VphDCF5dH9nFnI417ez6pgcvBfpBAMEs_IbXb9U3f9qMzGL4mfhMu4UbT1QOUV4cm1OL5Nwg-hH4VCtcpBFZ8bq5hi9hZYRd9mPEG0cDmIAymmOsqDXT6hN2m86mrrmpyyM2Vy6MVyJpYEyk7-1KwGxiJmxTgHtWeMQfc7uKPdgLOJRM5Lctvtk3etiyKgMVl&type=2&tk_cps_param=736190100&tkFlag=1&tk_cps_ut=1',
+						title:'服装配饰'
+					},
+					{
+						type: 'image',
+						url: '/static/index/nz.jpg',
+						link:'https://huodong.taobao.com/wow/a/act/tao/tmc/24519/wupr?wh_pid=industry-177213&ptl=from:tbkapi&ali_trackid=2:mm_736190100_1133100220_109822950097:1575872449_145_1341947496&pvid=23116944&ak=23116944&e=60RJm9aZw0I4kVDdsVUeBnXrDvFw_HbDzAEgCXNrvffYgv019zNeJf1SarTXhIOTlMqVS29KK4JIMmQ85Iwp-dzkf7t_Ww69rEY4IKJ-WR-XHWvktHoMnnbYP_1RThbYBeGwa2YUCB1LDxvzgO2y0IYCcm_VoFIlFqSBVzqLUMNuhrY0yGjY1xikaALEhjGaxa12w9XWwmrGqw5oplY0r0K-YOYvrkDC-cyeyoOjig3LR4TGiud24354x-YHvdapnNvX8xv73ClIMmQ85Iwp-Yw-tyYGEuD2kgHF1yQEQSjkXxCzVEm-Nkl4-FF1HJAa2qC9qtHaIwBOK3EZFKXLEI6g1kLQ71xCSXj4UXUckBqUsVV6aYxYCd_sIGP2dMcL&type=2&tk_cps_param=736190100&tkFlag=1&tk_cps_ut=1',
+						title:'时髦女装'
 					}
 				],
 				head_info: [],
@@ -269,7 +274,7 @@
 				refreshText: "下拉可以刷新",
 				tabIndex: 0, //当前的tab栏的索引
 				tabBars: [{
-						val: "3756",
+						val: 0,
 						desc: "综合",
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -281,7 +286,7 @@
 						isquest: true,
 					},
 					{
-						val: "3765",
+						val: 10,
 						desc: "内衣",
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -293,7 +298,7 @@
 						isquest: true,
 					},
 					{
-						val: "3767",
+						val:1,
 						desc: "女装",
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -305,7 +310,7 @@
 						isquest: true,
 					},
 					{
-						val: "3763",
+						val: 3,
 						desc: "美妆",
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -317,7 +322,7 @@
 						isquest: true,
 					},
 					{
-						val: "3764",
+						val: 9,
 						desc: "男装",
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -329,7 +334,7 @@
 						isquest: true,
 					},
 					{
-						val: "3760",
+						val: 2,
 						desc: "母婴",
 						orderList: [],
 						loadingType: true, //是否还有数据
@@ -341,8 +346,8 @@
 						isquest: true,
 					},
 					{
-						val: "3762",
-						desc: "鞋包",
+						val: 5,
+						desc: "鞋品",
 						orderList: [],
 						loadingType: true, //是否还有数据
 						loadingText: "正在加载...", //上拉加载文字提示
@@ -434,7 +439,15 @@
 								if (data.app_url) {
 									this.createTask(data.app_url)
 								}
-
+								// var timeId = setTimeout(() => {
+								// 	uni.navigateTo({
+								// 		url: '/pages/update/index'
+								// 	})
+								// 	if (timeId) {
+								// 		console.log(timeId)
+								// 		clearTimeout(timeId)
+								// 	}
+								// }, 3500)
 							}
 						}
 					})
@@ -539,13 +552,19 @@
 					url: `/pages/index/kzweb?url=${url}`
 				})
 			},
-			toSwiper(url) {
-				uni.navigateTo({
-					url,
-					complete: () => {
-
-					}
-				})
+			toSwiper(link,title) {
+				plug.detailPage({
+					url: link,
+					"openType": 0
+				}, result => {
+					console.log(res)
+				});
+				// uni.setStorageSync('swiper-data',{
+				// 	link,title
+				// })
+				// uni.navigateTo({
+				// 	url:`/pages/index/swiper/other`
+				// })
 			},
 			scrollToTop: function() {
 				const el = this.$refs['totop' + this.tabIndex][0]
@@ -632,7 +651,7 @@
 								url: res.data.data,
 								"openType": 0
 							}, result => {
-							console.log(result);
+								console.log(result);
 							});
 						}
 					})
@@ -694,18 +713,20 @@
 				}
 				console.log(navItem.val, this.pageSize, navItem.pageNo)
 				uni.request({
-					url: 'http://39.100.111.131:8080/getgood',
+					url: 'http://39.100.111.131:8080/everyday_new',
 					data: {
-						channel: navItem.val,
+						cid: navItem.val,
 						pagesize: this.pageSize,
 						pageno: navItem.pageNo
 					},
 					success: res => {
+						console.log(res);
 						let {
-							code,
-							data
+							status,
+							content
 						} = res.data;
 						//如果上一次请求失败,请求数据加 1；
+						
 						if (!navItem.isquest) {
 							navItem.isquest = true;
 							this.pageSize--;
@@ -718,8 +739,8 @@
 							navItem.orderList = [];
 						}
 						//请求成功
-						if (code == 200) {
-							let shopList = data;
+						if (status == 200) {
+							let shopList = content;
 							// 添加新增数据		
 							navItem.orderList = navItem.orderList.concat(shopList);
 							//请求成功序号增加,并且修改对应得加载状态
@@ -1121,6 +1142,7 @@
 		/* overflow: hidden; */
 		text-overflow: ellipsis;
 		lines: 1;
+		color: #545454;
 	}
 
 	.earn {

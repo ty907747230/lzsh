@@ -429,10 +429,18 @@
 					//授权成功获取reation_id
 					return
 				}
+				
+				try{
+					if(!this.carouselimg[0]){
+						this.carouselimg[0]=''
+					}
+				}catch(e){
+					this.carouselimg[0]=''
+				}
 
 				//登录并授权之后跳转分享页面
 				uni.navigateTo({
-					url: `/pages/share/share?id=${id}&rid=${reation_id}&num=${(this.goods.tkfee3*this.userlevel.level_percent).toFixed(2)}`,
+					url: `/pages/share/share?id=${id}&rid=${reation_id}&num=${(this.goods.tkfee3*this.userlevel.level_percent).toFixed(2)}&pic_url=${this.carouselimg[0]}`,
 				});
 			},
 			//猜你喜欢点击事件

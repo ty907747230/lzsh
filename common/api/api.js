@@ -407,6 +407,10 @@ const GetExtendOnOff=(version_num)=>http.get('8088/UserCenter/GetExtendOnOff',{
 })
 //版本控制
 
+const HandleLink=(tkl,pic)=>http.get('8080/HandleLink',{
+	tkl,pic
+})
+
 //暴露API
 export default {
 	getGood,
@@ -465,5 +469,6 @@ export default {
 	GetAllPid,
 	AddMyTracks,
 	GetIosVersion,
-	GetExtendOnOff
+	GetExtendOnOff,
+	HandleLink
 };

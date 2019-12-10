@@ -7,11 +7,10 @@
 	import setId from '@/common/set_id.js';
 	export default {
 		onUniNViewMessage: function(e) {
-			//监听到nvue页面传入的信息，修改store
+			
 			if (e.data.user) {
 				// this.$store.state.user = e.data.user;
 				this.$store.commit('editUser', e.data.user)
-				console.log("App.vue收到数据", JSON.stringify(e.data.user))
 			}
 
 		},
